@@ -88,7 +88,7 @@ func (a *adapter) Read(app string, lines int) ([]string, error) {
 	if ok {
 		return rb.read(lines), nil
 	}
-	return nil, fmt.Errorf("Could not find logs for '%s' --- %+v", app, a.ringBuffers)
+	return nil, fmt.Errorf("Could not find logs for '%s'", app)
 }
 
 // Destroy deletes stored logs for the specified application
