@@ -1,6 +1,7 @@
 package syslogish
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -105,9 +106,13 @@ func (s *Server) receive() {
 		if err != nil {
 			log.Fatal("syslogish server read error", err)
 		}
-		message := strings.TrimSuffix(string(buf[:n]), "\n")
+		rawMessage := strings.TrimSuffix(string(buf[:n]), "\n")
+		// We want to strip off all the leading syslog junk but there is no good way to do that.
+		// So we split the string on the leading "{" but we have to add it back so we can parse the log message into a map
+		logMessage := "{" + strings.SplitAfterN(rawMessage, "{", 2)[1]
+
 		select {
-		case s.storageQueue <- message:
+		case s.storageQueue <- logMessage:
 		default:
 		}
 	}
@@ -116,8 +121,11 @@ func (s *Server) receive() {
 func (s *Server) processStorage() {
 	for message := range s.storageQueue {
 		// Parse the message into json
-		app, err := getAppName(message)
-		if err == nil {
+		var messageJSON map[string]interface{}
+		err := json.Unmarshal([]byte(message), &messageJSON)
+		// We sometimes get log messages that do not conform to the structure we expect.
+		// So we will check that the kubernetes key exists so that we dont error out.
+		if err == nil && messageJSON["kubernetes"] != nil {
 			// Get a read lock to ensure the storage adapater pointer can't be nilled by the configurer
 			// in the time between we check if it's nil and the time we invoke .Write() upon it.
 			s.adapterMutex.RLock()
@@ -125,6 +133,7 @@ func (s *Server) processStorage() {
 			// we are inside an infinite loop here.  If we defer, we would never release the lock.
 			// Instead, release it manually below.
 			if s.storageAdapter != nil {
+				app := messageJSON["kubernetes"].(map[string]interface{})["container_name"].(string)
 				s.storageAdapter.Write(app, message)
 				// We don't bother trapping errors here, so failed writes to storage are silent.  This is by
 				// design.  If we sent a log message to STDOUT in response to the failure, deis-logspout
@@ -171,17 +180,6 @@ func (s *Server) processDrainage() {
 		}
 		s.drainMutex.RUnlock()
 	}
-}
-
-func getAppName(message string) (string, error) {
-	if strings.Contains(message, "\"container_name\":") {
-		splitMessage := strings.Split(message, "\"container_name\":")
-		app := strings.TrimSuffix(splitMessage[1], "}}")
-		app = strings.TrimPrefix(app, "\"")
-		app = strings.TrimSuffix(app, "\"")
-		return app, nil
-	}
-	return "", fmt.Errorf("Could not find container name in message")
 }
 
 // ReadLogs returns a specified number of log lines (if available) for a specified app by
