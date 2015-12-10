@@ -1,1 +1,2 @@
 /image/bin/logger
+/manifests/*.tmp.yaml
