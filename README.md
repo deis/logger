@@ -9,7 +9,7 @@ The new v2 logger implementation has seen a simplification from the last rewrite
 
 We have also decided to not use `logspout` as the mechanism to get logs from each container to the `logger` component. Now we will use [fluentd](http://fluentd.org) which is a widely supported logging framework with hundreds of plugins. This will allow the end user to configure multiple destinations such as Elastic Search and other Syslog compatible endpoints like [papertrail](http://papertrailapp.com).
 
-** This image requires that the `daemonsets` api be available on the kubernetes cluster** For more information on running the `daemonsets` api see the [following](https://github.com/kubernetes/kubernetes/blob/master/docs/api.md#enabling-resources-in-the-extensions-group). 
+** This image requires that the `daemonsets` api be available on the kubernetes cluster** For more information on running the `daemonsets` api see the [following](https://github.com/kubernetes/kubernetes/blob/master/docs/api.md#enabling-resources-in-the-extensions-group).
 
 ## Running logger v2
 The following environment variables can be used to configure logger:
@@ -19,6 +19,8 @@ The following environment variables can be used to configure logger:
 * `WEB_ADDR`: The interface to bind the web server to. Default is `0.0.0.0`.
 * `WEB_PORT`: The port that the web server is listening on. Default is `8088`.
 * `STORAGE_ADAPTER`: How to store logs that are sent to the logger interface. Default is `memory`
+* `NUMBER_OF_LINES`: How many lines to store in the ring buffer. Default is `1000`.
+* `LOG_PATH`: The path of where to store files when using the file storage adapter. Default is `/data/logs`.
 * `DRAIN_URL`: Syslog server that the logger component can send data to. No default.
 
 ## Development

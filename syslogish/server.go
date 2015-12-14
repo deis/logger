@@ -38,7 +38,7 @@ type Server struct {
 }
 
 // NewServer returns a pointer to a new Server instance.
-func NewServer(bindHost string, bindPort int, storageType string, drainURL string) (*Server, error) {
+func NewServer(bindHost string, bindPort int, storageType string, numLines int, logPath string, drainURL string) (*Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", bindHost, bindPort))
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func NewServer(bindHost string, bindPort int, storageType string, drainURL strin
 		return nil, err
 	}
 
-	newStorageAdapter, err := storage.NewAdapter(storageType)
+	newStorageAdapter, err := storage.NewAdapter(storageType, numLines, logPath)
 	if err != nil {
 		return nil, fmt.Errorf("configurer: Error creating storage adapter: %v", err)
 	}

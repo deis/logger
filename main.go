@@ -16,16 +16,17 @@ var (
 	// favor of just using environment variables.  Fewer avenues of configuring this component means
 	// less confusion.
 	logAddr     = getopt("LOGGER_ADDR", "0.0.0.0")
-	logHost     = getopt("HOST", "127.0.0.1")
 	logPort, _  = strconv.Atoi(getopt("LOGGER_PORT", "514"))
+	logPath     = getopt("LOG_PATH", "/data/logs")
 	webAddr     = getopt("WEB_ADDR", "0.0.0.0")
 	webPort, _  = strconv.Atoi(getopt("WEB_PORT", "8088"))
 	storageType = getopt("STORAGE_ADAPTER", "memory")
+	numLines, _ = strconv.Atoi(getopt("NUMBER_OF_LINES", "1000"))
 	drainURL    = getopt("DRAIN_URL", "")
 )
 
 func main() {
-	syslogishServer, err := syslogish.NewServer(logAddr, logPort, storageType, drainURL)
+	syslogishServer, err := syslogish.NewServer(logAddr, logPort, storageType, numLines, logPath, drainURL)
 	if err != nil {
 		log.Fatal("Error creating syslogish server", err)
 	}
