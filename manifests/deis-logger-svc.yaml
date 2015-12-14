@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: deis-logger
+  labels:
+    heritage: deis
+    app: deis-logger
+spec:
+  ports:
+  - port: 8088
+    name: http
+    targetPort: http
+  - port: 514
+    name: transport
+    targetPort: transport
+    protocol: UDP
+  selector:
+    app: deis-logger
