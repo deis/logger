@@ -33,7 +33,6 @@ The only assumption this project makes about your environment is that you have a
 To build the binary and image run the following make command:
 
 ```console
-make build
 REGISTRY=quay.io/myaccount make build
 REGISTRY=myaccount make build
 REGISTRY=myhost:5000 make build
@@ -43,7 +42,6 @@ REGISTRY=myhost:5000 make build
 The makefile assumes that you are pushing the image to a remote repository like quay or dockerhub. So you will need to supply the `REGISTRY` environment variable.
 
 ```console
-make push
 REGISTRY=quay.io/myaccount make push
 REGISTRY=myaccount make push
 REGISTRY=myhost:5000 make push
