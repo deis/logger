@@ -13,7 +13,3 @@ before_install:
   - go get github.com/golang/lint/golint
 script:
   - make test
-deploy:
-  script: VERSION=latest make build push
-  on:
-    branch: master
