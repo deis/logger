@@ -1,0 +1,19 @@
+language: go
+go:
+  - 1.5.1
+env:
+  - GO15VENDOREXPERIMENT=1
+branches:
+  only:
+    - master
+services:
+  - docker
+sudo: required
+before_install:
+  - go get github.com/golang/lint/golint
+script:
+  - make test
+deploy:
+  script: VERSION=latest make build push
+  on:
+    branch: master

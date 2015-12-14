@@ -1,9 +1,4 @@
 SHELL = /bin/bash
-
-ifndef BUILD_TAG
-  BUILD_TAG = git-$(shell git rev-parse --short HEAD)
-endif
-
 GO = go
 GOFMT = gofmt -l
 GOLINT = golint
@@ -19,15 +14,18 @@ BINARY_DEST_DIR = image/bin
 # the filepath to this repository, relative to $GOPATH/src
 repo_path = github.com/deis/logger
 
-DOCKER_HOST = $(shell echo $$DOCKER_HOST)
-REGISTRY = $(shell if [ -z $$DEV_REGISTRY]; then echo deis/; else echo $$DEV_REGISTRY/; fi)
 
+DOCKER_HOST = $(shell echo $$DOCKER_HOST)
+REGISTRY = $(shell if [ -z $$DEV_REGISTRY ]; then echo deis/; else echo $$DEV_REGISTRY/; fi)
+ifndef VERSION
+  VERSION = git-$(shell git rev-parse --short HEAD)
+endif
 COMPONENT = logger
-IMAGE = $(REGISTRY)$(COMPONENT):$(BUILD_TAG)
+IMAGE = $(REGISTRY)$(COMPONENT):$(VERSION)
 
 check-docker:
 	@if [ -z $$(which docker) ]; then \
-	  echo "Missing \`docker\` client which is required for development"; \
+	  echo "Missing docker client which is required for development"; \
 	  exit 2; \
 	fi
 
