@@ -20,12 +20,10 @@ BINARY_DEST_DIR = image/bin
 repo_path = github.com/deis/logger
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
-REGISTRY = $(shell if [ "$$DEV_REGISTRY" == "registry.hub.docker.com" ]; then echo; else echo $$DEV_REGISTRY/; fi)
+REGISTRY = $(shell if [ -z $$DEV_REGISTRY]; then echo deis/; else echo $$DEV_REGISTRY/; fi)
 
 COMPONENT = logger
-IMAGE_PREFIX = deis/
-IMAGE = $(IMAGE_PREFIX)$(COMPONENT):$(BUILD_TAG)
-DEV_IMAGE = $(REGISTRY)$(IMAGE)
+IMAGE = $(REGISTRY)$(COMPONENT):$(BUILD_TAG)
 
 check-docker:
 	@if [ -z $$(which docker) ]; then \
@@ -33,24 +31,21 @@ check-docker:
 	  exit 2; \
 	fi
 
-dev-registry: check-docker
-	@docker inspect registry >/dev/null 2>&1 && docker start registry || docker run --restart="always" -d -p 5000:5000 --name registry registry:0.9.1
-	@echo
-	@echo "To use a local registry for Deis development:"
-	@echo "    export DEV_REGISTRY=`docker-machine ip $$(docker-machine active 2>/dev/null) 2>/dev/null || echo $(HOST_IPADDR) `:5000"
-
 build: build-binary docker-build
 
-push: build docker-push
+push: docker-push
 
 docker-build: check-docker
 	docker build -t $(IMAGE) image
 
-docker-push: update-manifests
-		docker tag -f $(IMAGE) $(DEV_IMAGE)
+docker-push: check-docker
+	docker push $(IMAGE)
+
+clean: check-docker
+	docker rmi $(IMAGE)
 
 update-manifests:
-	sed 's#\(image:\) .*#\1 $(DEV_IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
+	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
 
 build-binary:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags '-s' -o $(BINARY_DEST_DIR)/logger github.com/deis/logger || exit 1
@@ -75,3 +70,18 @@ test-unit: test-style
 coverage:
 	go test -coverprofile coverage.out ./syslog
 	go tool cover -html=coverage.out
+
+kube-delete:
+	-kubectl delete -f manifests/deis-logger-rc.yaml
+	-kubectl delete -f manifests/deis-logger-svc.yaml
+	-kubectl delete -f manifests/deis-logger-fluentd-daemon.yaml
+
+kube-create: update-manifests
+	kubectl create -f manifests/deis-logger-rc.tmp.yaml
+	kubectl create -f manifests/deis-logger-svc.yaml
+	kubectl create -f manifests/deis-logger-fluentd-daemon.yaml
+
+kube-replace: build push update-manifests
+	kubectl replace --force -f manifests/deis-logger-rc.tmp.yaml
+	kubectl replace --force -f manifests/deis-logger-svc.yaml
+	kubectl replace --force -f manifests/deis-logger-fluentd-daemon.yaml
