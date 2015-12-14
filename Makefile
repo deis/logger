@@ -4,7 +4,7 @@ ifndef BUILD_TAG
   BUILD_TAG = git-$(shell git rev-parse --short HEAD)
 endif
 
-GO = godep go
+GO = go
 GOFMT = gofmt -l
 GOLINT = golint
 GOTEST = $(GO) test --cover --race -v
@@ -55,7 +55,7 @@ test: test-style test-unit test-functional
 
 test-functional:
 	@$(MAKE) -C ../tests/ test-etcd
-	GOPATH=`cd ../tests/ && godep path`:$(GOPATH) go test -v ./tests/...
+	GOPATH=`cd ../tests/`:$(GOPATH) go test -v ./tests/...
 
 test-style:
 # display output, then check
