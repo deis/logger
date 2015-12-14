@@ -13,3 +13,8 @@ before_install:
   - go get github.com/golang/lint/golint
 script:
   - make test
+deploy:
+  provider: script
+  script: _scripts/deploy.sh
+  on:
+    branch: master

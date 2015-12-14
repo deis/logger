@@ -16,7 +16,7 @@ repo_path = github.com/deis/logger
 
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
-REGISTRY = $(shell if [ -z $$DEV_REGISTRY ]; then echo deis/; else echo $$DEV_REGISTRY/; fi)
+REGISTRY = $(shell if [ -z $$REGISTRY ]; then echo deis/; else echo $$REGISTRY/; fi)
 ifndef VERSION
   VERSION = git-$(shell git rev-parse --short HEAD)
 endif

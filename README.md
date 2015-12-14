@@ -1,4 +1,7 @@
 # Deis Logger
+[![Build Status](https://travis-ci.org/deis/logger.svg?branch=master)](https://travis-ci.org/deis/logger) [![Go Report Card](http://goreportcard.com/badge/deis/logger)](http://goreportcard.com/report/deis/logger)
+
+
 A system logger for use in the [Deis](http://deis.io) open source PaaS.
 
 This Docker image is based on the official
@@ -31,25 +34,25 @@ To build the binary and image run the following make command:
 
 ```console
 make build
-DEV_REGISTRY=quay.io/myaccount make build
-DEV_REGISTRY=myaccount make build
-DEV_REGISTRY=myhost:5000 make build
+REGISTRY=quay.io/myaccount make build
+REGISTRY=myaccount make build
+REGISTRY=myhost:5000 make build
 ```
 
 ### Pushing the image
-The makefile assumes that you are pushing the image to a remote repository like quay or dockerhub. So you will need to supply the `DEV_REGISTRY` environment variable.
+The makefile assumes that you are pushing the image to a remote repository like quay or dockerhub. So you will need to supply the `REGISTRY` environment variable.
 
 ```console
 make push
-DEV_REGISTRY=quay.io/myaccount make push
-DEV_REGISTRY=myaccount make push
-DEV_REGISTRY=myhost:5000 make push
+REGISTRY=quay.io/myaccount make push
+REGISTRY=myaccount make push
+REGISTRY=myhost:5000 make push
 ```
 
 ### Kubernetes interactions
-* `DEV_REGISTRY=quay.io/myaccount make kube-create`: Does a sed replacement of the image name and creates a tmp manifest file that we will use to deploy logger component to kubernetes. This will also start 2 `fluentd` daemonsets.
+* `REGISTRY=quay.io/myaccount make kube-create`: Does a sed replacement of the image name and creates a tmp manifest file that we will use to deploy logger component to kubernetes. This will also start 2 `fluentd` daemonsets.
 * `make kube-delete`: This will remove all the logger components from the kubernetes cluster.
-* `DEV_REGISTRY=quay.io/myaccount make kube-replace`: This will rebuild the binary and image, push it to the remote registry, and then replace the running components with the new version.
+* `REGISTRY=quay.io/myaccount make kube-replace`: This will rebuild the binary and image, push it to the remote registry, and then replace the running components with the new version.
 
 ## License
 
