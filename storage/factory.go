@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/deis/logger/storage/file"
 	"github.com/deis/logger/storage/ringbuffer"
 )
@@ -15,9 +16,12 @@ func NewAdapter(storeageAdapterType string, numLines int, logPath string) (Adapt
 		}
 		return adapter, nil
 	}
-	adapter, err := ringbuffer.NewStorageAdapter(numLines)
-	if err != nil {
-		return nil, err
+	if storeageAdapterType == "memory" {
+		adapter, err := ringbuffer.NewStorageAdapter(numLines)
+		if err != nil {
+			return nil, err
+		}
+		return adapter, nil
 	}
-	return adapter, nil
+	return nil, fmt.Errorf("Unrecognized storage adapter type: '%s'", storeageAdapterType)
 }
