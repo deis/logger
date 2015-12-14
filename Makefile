@@ -49,11 +49,7 @@ build-binary:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags '-s' -o $(BINARY_DEST_DIR)/logger github.com/deis/logger || exit 1
 	@$(call check-static-binary,$(BINARY_DEST_DIR)/logger)
 
-test: test-style test-unit test-functional
-
-test-functional:
-	@$(MAKE) -C ../tests/ test-etcd
-	GOPATH=`cd ../tests/`:$(GOPATH) go test -v ./tests/...
+test: test-style test-unit
 
 test-style:
 # display output, then check
