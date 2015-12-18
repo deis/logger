@@ -16,12 +16,16 @@ repo_path = github.com/deis/logger
 
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
-REGISTRY = $(shell if [ -z $$REGISTRY ]; then echo deis/; else echo $$REGISTRY/; fi)
-ifndef VERSION
-  VERSION = git-$(shell git rev-parse --short HEAD)
-endif
-COMPONENT = logger
-IMAGE = $(REGISTRY)$(COMPONENT):$(VERSION)
+BUILD_TAG ?= git-$(shell git rev-parse --short HEAD)
+SHORT_NAME ?= logger
+DEIS_REGISTRY ?= ${DEV_REGISTRY}/
+IMAGE_PREFIX ?= deisci
+IMAGE := ${DEIS_REGISTRY}${IMAGE_PREFIX}/${SHORT_NAME}:${BUILD_TAG}
+
+info:
+	@echo "Build tag:  ${BUILD_TAG}"
+	@echo "Registry:   ${DEIS_REGISTRY}"
+	@echo "Image:      ${IMAGE}"
 
 check-docker:
 	@if [ -z $$(which docker) ]; then \

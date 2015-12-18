@@ -5,7 +5,7 @@
 
 cd "$(dirname "$0")" || exit 1
 
-export VERSION=v2-alpha
+export BUILD_TAG=v2-alpha
 echo "Logging into docker hub account!"
 docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 echo "Building docker image and pushing to docker hub!"
@@ -13,4 +13,4 @@ make -C .. build push
 echo "Logging into quay.io account!"
 docker login -e="$QUAY_EMAIL" -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
 echo "Building docker image and pushing to quay.io!"
-REGISTRY=quay.io/deisci make -C .. build push
+DEIS_REGISTRY=quay.io/ make -C .. build push
