@@ -33,24 +33,24 @@ The only assumption this project makes about your environment is that you have a
 To build the binary and image run the following make command:
 
 ```console
-REGISTRY=quay.io/myaccount make build
-REGISTRY=myaccount make build
-REGISTRY=myhost:5000 make build
+DEV_REGISTRY=quay.io IMAGE_PREFIX=myaccount make build
+IMAGE_PREFIX=myaccount make build
+DEV_REGISTRY=myhost:5000 make build
 ```
 
 ### Pushing the image
 The makefile assumes that you are pushing the image to a remote repository like quay or dockerhub. So you will need to supply the `REGISTRY` environment variable.
 
 ```console
-REGISTRY=quay.io/myaccount make push
-REGISTRY=myaccount make push
-REGISTRY=myhost:5000 make push
+DEV_REGISTRY=quay.io IMAGE_PREFIX=myaccount make push
+IMAGE_PREFIX=myaccount make push
+DEV_REGISTRY=myhost:5000 make push
 ```
 
 ### Kubernetes interactions
-* `REGISTRY=quay.io/myaccount make kube-create`: Does a sed replacement of the image name and creates a tmp manifest file that we will use to deploy logger component to kubernetes. This will also start 2 `fluentd` daemonsets.
+* `DEV_REGISTRY=quay.io IMAGE_PREFIX=myaccount make kube-create`: Does a sed replacement of the image name and creates a tmp manifest file that we will use to deploy logger component to kubernetes. This will also start 2 `fluentd` daemonsets.
 * `make kube-delete`: This will remove all the logger components from the kubernetes cluster.
-* `REGISTRY=quay.io/myaccount make kube-replace`: This will rebuild the binary and image, push it to the remote registry, and then replace the running components with the new version.
+* `DEV_REGISTRY=quay.io IMAGE_PREFIX=myaccount make kube-replace`: This will rebuild the binary and image, push it to the remote registry, and then replace the running components with the new version.
 
 ## License
 
