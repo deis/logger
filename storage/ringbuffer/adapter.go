@@ -3,6 +3,7 @@ package ringbuffer
 import (
 	"container/ring"
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -74,6 +75,7 @@ func (a *adapter) Write(app string, message string) error {
 		defer a.mutex.Unlock()
 		rb, ok = a.ringBuffers[app]
 		if !ok {
+			log.Printf("Creating buffer for app:%v", app)
 			rb = newRingBuffer(a.bufferSize)
 			a.ringBuffers[app] = rb
 		}
