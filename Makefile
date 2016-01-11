@@ -40,7 +40,7 @@ push: docker-push
 
 docker-build: check-docker
 	docker build -t $(IMAGE_LATEST) image
-	docker tag $(IMAGE_LATEST) $(IMAGE)
+	docker tag -f $(IMAGE_LATEST) $(IMAGE)
 
 docker-push: check-docker
 	docker push $(IMAGE)
