@@ -126,33 +126,37 @@ func (s *Server) processStorage() {
 		// We sometimes get log messages that do not conform to the structure we expect.
 		// So we will check that the kubernetes key exists so that we dont error out.
 		if err == nil && messageJSON["kubernetes"] != nil {
-			// Get a read lock to ensure the storage adapater pointer can't be nilled by the configurer
-			// in the time between we check if it's nil and the time we invoke .Write() upon it.
-			s.adapterMutex.RLock()
-			// DONT'T defer unlocking... defered statements are executed when the function returns, but
-			// we are inside an infinite loop here.  If we defer, we would never release the lock.
-			// Instead, release it manually below.
-			if s.storageAdapter != nil {
-				app := messageJSON["kubernetes"].(map[string]interface{})["container_name"].(string)
-				s.storageAdapter.Write(app, message)
-				// We don't bother trapping errors here, so failed writes to storage are silent.  This is by
-				// design.  If we sent a log message to STDOUT in response to the failure, deis-logspout
-				// would read it and forward it back to deis-logger, which would fail again to write to
-				// storage and spawn ANOTHER log message.  The effect would be an infinite loop of
-				// unstoreable log messages that would nevertheless fill up journal logs and eventually
-				// overake the disk.
-				//
-				// Treating this as a fatal event would cause the deis-logger unit to restart-- sending
-				// even more log messages to STDOUT.  The overall effect would be the same as described
-				// above with the added disadvantages of flapping.
-			}
-			s.adapterMutex.RUnlock()
-			// Add the message to the drainage queue.  This allows the storage loop to continue right
-			// away instead of waiting while the message is sent to an external service-- since that
-			// could be a bottleneck and error prone depending on rate limiting, network congestion, etc.
-			select {
-			case s.drainageQueue <- message:
-			default:
+			labels := messageJSON["kubernetes"].(map[string]interface{})["labels"].(map[string]interface{})
+			// We only want to store deis app log messages
+			if labels != nil && labels["app"] != nil && labels["heritage"] != nil && labels["heritage"].(string) == "deis" {
+				// Get a read lock to ensure the storage adapater pointer can't be nilled by the configurer
+				// in the time between we check if it's nil and the time we invoke .Write() upon it.
+				s.adapterMutex.RLock()
+				// DONT'T defer unlocking... defered statements are executed when the function returns, but
+				// we are inside an infinite loop here.  If we defer, we would never release the lock.
+				// Instead, release it manually below.
+				if s.storageAdapter != nil {
+					app := labels["app"].(string)
+					s.storageAdapter.Write(app, messageJSON["log"].(string))
+					// We don't bother trapping errors here, so failed writes to storage are silent.  This is by
+					// design.  If we sent a log message to STDOUT in response to the failure, deis-logspout
+					// would read it and forward it back to deis-logger, which would fail again to write to
+					// storage and spawn ANOTHER log message.  The effect would be an infinite loop of
+					// unstoreable log messages that would nevertheless fill up journal logs and eventually
+					// overake the disk.
+					//
+					// Treating this as a fatal event would cause the deis-logger unit to restart-- sending
+					// even more log messages to STDOUT.  The overall effect would be the same as described
+					// above with the added disadvantages of flapping.
+				}
+				s.adapterMutex.RUnlock()
+				// Add the message to the drainage queue.  This allows the storage loop to continue right
+				// away instead of waiting while the message is sent to an external service-- since that
+				// could be a bottleneck and error prone depending on rate limiting, network congestion, etc.
+				select {
+				case s.drainageQueue <- message:
+				default:
+				}
 			}
 		}
 	}
