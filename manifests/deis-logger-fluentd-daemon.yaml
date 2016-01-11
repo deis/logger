@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: deis-logger-fluentd
-        image: quay.io/deisci/fluentd:v2-alpha
+        image: quay.io/deis/fluentd:v2-beta
         imagePullPolicy: Always
         securityContext:
           privileged: true
