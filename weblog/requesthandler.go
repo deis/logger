@@ -34,15 +34,14 @@ func (h requestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h requestHandler) serveGet(w http.ResponseWriter, r *http.Request) {
-	requestURI := strings.Split(r.RequestURI, "/")
-
-	if len(requestURI) == 0 {
+	match := getRegex.FindStringSubmatch(r.RequestURI)
+	if match == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	app := requestURI[1]
-	logLines := parseLogLines(requestURI)
+	app := match[1]
+	logLines := parseLogLines(match[2])
 	logs, err := h.syslogishServer.ReadLogs(app, logLines)
 	if err != nil {
 		log.Println(err)
@@ -72,15 +71,11 @@ func (h requestHandler) serveDelete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseLogLines(requestURI []string) int {
-	if len(requestURI) == 2 {
+func parseLogLines(logLines string) int {
+	lines, err := strconv.Atoi(logLines)
+	if err != nil || lines < 1 {
 		log.Printf("The number of lines to return was not specified. Defaulting to 100 lines.")
 		return 100
 	}
-	logLines, err := strconv.Atoi(strings.Split(requestURI[2], "=")[1])
-	if err != nil || logLines < 1 {
-		log.Printf("Invalid number of log lines specified. Defaulting to 100 lines.")
-		return 100
-	}
-	return logLines
+	return lines
 }

@@ -125,7 +125,7 @@ func (s *Server) processStorage() {
 		err := json.Unmarshal([]byte(message), &messageJSON)
 		// We sometimes get log messages that do not conform to the structure we expect.
 		// So we will check that the kubernetes key exists so that we dont error out.
-		if err == nil && messageJSON["kubernetes"] != nil {
+		if err == nil && messageJSON["kubernetes"] != nil && messageJSON["kubernetes"].(map[string]interface{})["labels"] != nil {
 			labels := messageJSON["kubernetes"].(map[string]interface{})["labels"].(map[string]interface{})
 			// We only want to store deis app log messages
 			if labels != nil && labels["app"] != nil && labels["heritage"] != nil && labels["heritage"].(string) == "deis" {
