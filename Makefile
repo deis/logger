@@ -18,8 +18,9 @@ repo_path = github.com/deis/logger
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
 BUILD_TAG ?= git-$(shell git rev-parse --short HEAD)
 SHORT_NAME ?= logger
-DEIS_REGISTRY ?= ${DEV_REGISTRY}/
-IMAGE_PREFIX ?= deisci
+DEIS_REGISTRY ?= ${DEV_REGISTRY}
+IMAGE_PREFIX ?= deis
+IMAGE_LATEST := ${DEIS_REGISTRY}${IMAGE_PREFIX}/${SHORT_NAME}:latest
 IMAGE := ${DEIS_REGISTRY}${IMAGE_PREFIX}/${SHORT_NAME}:${BUILD_TAG}
 
 info:
@@ -38,7 +39,8 @@ build: build-binary docker-build
 push: docker-push
 
 docker-build: check-docker
-	docker build -t $(IMAGE) image
+	docker build -t $(IMAGE_LATEST) image
+	docker tag $(IMAGE_LATEST) $(IMAGE)
 
 docker-push: check-docker
 	docker push $(IMAGE)
