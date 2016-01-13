@@ -78,7 +78,7 @@ kube-install:
 
 kube-delete:
 	-kubectl delete -f manifests/deis-logger-svc.yaml
-	-kubectl delete -f manifests/deis-logger-rc.yaml
+	-kubectl delete -f manifests/deis-logger-rc.tmp.yaml
 	-kubectl delete -f manifests/deis-logger-fluentd-daemon.yaml
 
 kube-create: update-manifests
@@ -87,9 +87,7 @@ kube-create: update-manifests
 	kubectl create -f manifests/deis-logger-fluentd-daemon.yaml
 
 kube-replace: build push update-manifests
-	kubectl replace --force -f manifests/deis-logger-svc.yaml
 	kubectl replace --force -f manifests/deis-logger-rc.tmp.yaml
-	kubectl replace --force -f manifests/deis-logger-fluentd-daemon.yaml
 
 kube-update: update-manifests
 	kubectl delete -f manifests/deis-logger-rc.tmp.yaml
