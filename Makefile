@@ -71,6 +71,11 @@ coverage:
 	go test -coverprofile coverage.out ./syslog
 	go tool cover -html=coverage.out
 
+kube-install:
+	kubectl create -f manifests/deis-logger-svc.yaml
+	kubectl create -f manifests/deis-logger-rc.yaml
+	kubectl create -f manifests/deis-logger-fluentd-daemon.yaml
+
 kube-delete:
 	-kubectl delete -f manifests/deis-logger-svc.yaml
 	-kubectl delete -f manifests/deis-logger-rc.yaml
