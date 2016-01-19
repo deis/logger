@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/deis/logger/syslogish"
+	"github.com/gorilla/mux"
 )
 
 // Server implements a simple HTTP server that handles GET and DELETE requests for application
@@ -15,7 +16,7 @@ type Server struct {
 	listening bool
 	bindHost  string
 	bindPort  int
-	handler   *requestHandler
+	router    *mux.Router
 }
 
 // NewServer returns a pointer to a new Server instance.
@@ -23,7 +24,7 @@ func NewServer(bindHost string, bindPort int, syslogishServer *syslogish.Server)
 	return &Server{
 		bindHost: bindHost,
 		bindPort: bindPort,
-		handler:  &requestHandler{syslogishServer: syslogishServer},
+		router:   newRouter(newRequestHandler(syslogishServer)),
 	}, nil
 }
 
@@ -38,7 +39,7 @@ func (s *Server) Listen() {
 }
 
 func (s *Server) listen() {
-	http.Handle("/", s.handler)
+	http.Handle("/", s.router)
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", s.bindHost, s.bindPort), nil); err != nil {
 		log.Fatal("weblog server stopped", err)
 	}
