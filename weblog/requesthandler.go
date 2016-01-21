@@ -4,44 +4,40 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/deis/logger/syslogish"
+	"github.com/gorilla/mux"
 )
-
-var getRegex *regexp.Regexp
-var deleteRegex *regexp.Regexp
-
-func init() {
-	getRegex = regexp.MustCompile(`^/([-a-z0-9]+)/?(?:\?log_lines=([0-9]+))?$`)
-	deleteRegex = regexp.MustCompile(`^/([-a-z0-9]+)/?$`)
-}
 
 type requestHandler struct {
 	syslogishServer *syslogish.Server
 }
 
-func (h requestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		h.serveGet(w, r)
-	} else if r.Method == "DELETE" {
-		h.serveDelete(w, r)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-	}
+func newRequestHandler(syslogishServer *syslogish.Server) *requestHandler {
+	return &requestHandler{syslogishServer: syslogishServer}
 }
 
-func (h requestHandler) serveGet(w http.ResponseWriter, r *http.Request) {
-	match := getRegex.FindStringSubmatch(r.RequestURI)
-	if match == nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+func (h requestHandler) getHealthz(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
 
-	app := match[1]
-	logLines := parseLogLines(match[2])
+func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
+	app := mux.Vars(r)["app"]
+	var logLines int
+	logLinesStr := r.URL.Query().Get("log_lines")
+	if logLinesStr == "" {
+		log.Printf("The number of lines to return was not specified. Defaulting to 100 lines.")
+		logLines = 100
+	} else {
+		var err error
+		logLines, err = strconv.Atoi(logLinesStr)
+		if err != nil {
+			log.Printf("The specified number of log lines was invalid. Defaulting to 100 lines.")
+			logLines = 100
+		}
+	}
 	logs, err := h.syslogishServer.ReadLogs(app, logLines)
 	if err != nil {
 		log.Println(err)
@@ -58,24 +54,10 @@ func (h requestHandler) serveGet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h requestHandler) serveDelete(w http.ResponseWriter, r *http.Request) {
-	match := deleteRegex.FindStringSubmatch(r.RequestURI)
-	if match == nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	app := match[1]
+func (h requestHandler) deleteLogs(w http.ResponseWriter, r *http.Request) {
+	app := mux.Vars(r)["app"]
 	if err := h.syslogishServer.DestroyLogs(app); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-}
-
-func parseLogLines(logLines string) int {
-	lines, err := strconv.Atoi(logLines)
-	if err != nil || lines < 1 {
-		log.Printf("The number of lines to return was not specified. Defaulting to 100 lines.")
-		return 100
-	}
-	return lines
 }
