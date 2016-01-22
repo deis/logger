@@ -9,6 +9,9 @@ GO_PACKAGES = drain storage syslogish weblog
 GO_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,$(GO_PACKAGES))
 GO_TESTABLE_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,drain drain/simple storage storage/file storage/ringbuffer)
 
+# the filepath to this repository, relative to $GOPATH/src
+REPO_PATH = github.com/deis/logger
+
 # The following variables describe the containerized development environment
 # and other build options
 DEV_ENV_IMAGE := quay.io/deis/go-dev:0.3.0
@@ -18,9 +21,6 @@ DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV
 LDFLAGS := "-s -X main.version=${VERSION}"
 
 BINARY_DEST_DIR = image/bin
-
-# the filepath to this repository, relative to $GOPATH/src
-REPO_PATH = github.com/deis/logger
 
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
