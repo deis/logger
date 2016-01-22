@@ -52,6 +52,7 @@ update-manifests:
 	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
 
 build-binary:
+	glide install
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags '-s' -o $(BINARY_DEST_DIR)/logger github.com/deis/logger || exit 1
 	@$(call check-static-binary,$(BINARY_DEST_DIR)/logger)
 

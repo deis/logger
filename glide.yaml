@@ -1,2 +1,4 @@
 package: github.com/deis/logger
-import: []
+import:
+- package: github.com/gorilla/mux
+- package: github.com/gorilla/context
