@@ -6,13 +6,21 @@ GOTEST = $(GO) test --cover --race -v
 GOVET = $(GO) vet
 GO_FILES = $(wildcard *.go)
 GO_PACKAGES = drain storage syslogish weblog
-GO_PACKAGES_REPO_PATH = $(addprefix $(repo_path)/,$(GO_PACKAGES))
-GO_TESTABLE_PACKAGES_REPO_PATH = $(addprefix $(repo_path)/,drain drain/simple storage storage/file storage/ringbuffer)
+GO_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,$(GO_PACKAGES))
+GO_TESTABLE_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,drain drain/simple storage storage/file storage/ringbuffer)
+
+# The following variables describe the containerized development environment
+# and other build options
+DEV_ENV_IMAGE := quay.io/deis/go-dev:0.3.0
+DEV_ENV_WORK_DIR := /go/src/${REPO_PATH}
+DEV_ENV_CMD := docker run --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
+DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
+LDFLAGS := "-s -X main.version=${VERSION}"
 
 BINARY_DEST_DIR = image/bin
 
 # the filepath to this repository, relative to $GOPATH/src
-repo_path = github.com/deis/logger
+REPO_PATH = github.com/deis/logger
 
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
@@ -34,6 +42,16 @@ check-docker:
 	  exit 2; \
 	fi
 
+# Containerized dependency resolution
+bootstrap: check-docker
+	${DEV_ENV_CMD} glide install
+
+# Containerized build of the binary
+build-with-container: check-docker
+	mkdir -p ${BINARY_DEST_DIR}
+	${DEV_ENV_CMD} make build-binary
+	docker build --rm -t ${IMAGE} image/bin/logger
+
 build: build-binary docker-build
 
 push: docker-push
@@ -53,8 +71,7 @@ update-manifests:
 
 build-binary:
 	glide install
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags '-s' -o $(BINARY_DEST_DIR)/logger github.com/deis/logger || exit 1
-	@$(call check-static-binary,$(BINARY_DEST_DIR)/logger)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags ${LDFLAGS} -o $(BINARY_DEST_DIR)/logger main.go
 
 test: test-style test-unit
 
@@ -62,7 +79,7 @@ test-style:
 # display output, then check
 	$(GOFMT) $(GO_PACKAGES) $(GO_FILES)
 	@$(GOFMT) $(GO_PACKAGES) $(GO_FILES) | read; if [ $$? == 0 ]; then echo "gofmt check failed."; exit 1; fi
-	$(GOVET) $(repo_path) $(GO_PACKAGES_REPO_PATH)
+	$(GOVET) $(REPO_PATH) $(GO_PACKAGES_REPO_PATH)
 	$(GOLINT) ./...
 
 test-unit: test-style
