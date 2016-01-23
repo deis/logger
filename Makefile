@@ -50,7 +50,7 @@ bootstrap: check-docker
 build-with-container: check-docker
 	mkdir -p ${BINARY_DEST_DIR}
 	${DEV_ENV_CMD} make build-binary
-	docker build --rm -t ${IMAGE} image/bin/logger
+	docker build --rm -t ${IMAGE} image
 
 build: build-binary docker-build
 
