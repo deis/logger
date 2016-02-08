@@ -1,7 +1,12 @@
 # Deis Logger
 [![Build Status](https://travis-ci.org/deis/logger.svg?branch=master)](https://travis-ci.org/deis/logger) [![Go Report Card](http://goreportcard.com/badge/deis/logger)](http://goreportcard.com/report/deis/logger)
 
+Deis (pronounced DAY-iss) is an open source PaaS that makes it easy to deploy and manage
+applications on your own servers. Deis builds on [Kubernetes](http://kubernetes.io/) to provide
+a lightweight, [Heroku-inspired](http://heroku.com) workflow.
 
+![Deis Graphic](https://s3-us-west-2.amazonaws.com/get-deis/deis-graphic-small.png)
+ 
 A system logger for use in the [Deis](http://deis.io) open source PaaS.
 
 This Docker image is based on the official
