@@ -1,16 +1,15 @@
-language: go
-go:
-  - 1.5.1
-env:
-  - GO15VENDOREXPERIMENT=1
+language: generic
 branches:
   only:
     - master
+cache:
+  directories:
+    - vendor
+sudo: required
 services:
   - docker
-sudo: required
-before_install:
-  - go get github.com/golang/lint/golint
+install:
+  - make bootstrap
 script:
   - make test
 deploy:
