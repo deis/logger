@@ -1,6 +1,8 @@
-package: github.com/deis/logger
-import:
-- package: github.com/gorilla/mux
-  version: 26a6070f849969ba72b72256e9f14cf519751690
-- package: github.com/gorilla/context
+hash: bfc38dbd1902d5055a117b3b13a176b3c41c2f3cba9791479b164adffd054621
+updated: 2016-02-17T20:39:56.995047849Z
+imports:
+- name: github.com/gorilla/context
   version: 1c83b3eabd45b6d76072b66b746c20815fb2872d
+- name: github.com/gorilla/mux
+  version: 26a6070f849969ba72b72256e9f14cf519751690
+devImports: []

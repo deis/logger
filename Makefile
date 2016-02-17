@@ -14,14 +14,13 @@ REPO_PATH = github.com/deis/logger
 
 # The following variables describe the containerized development environment
 # and other build options
-DEV_ENV_IMAGE := quay.io/deis/go-dev:0.3.0
+DEV_ENV_IMAGE := quay.io/deis/go-dev:0.7.0
 DEV_ENV_WORK_DIR := /go/src/${REPO_PATH}
 DEV_ENV_CMD := docker run --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
 DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
 LDFLAGS := "-s -X main.version=${VERSION}"
 
 BINARY_DEST_DIR = image/bin
-
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
 BUILD_TAG ?= git-$(shell git rev-parse --short HEAD)
@@ -42,6 +41,10 @@ check-docker:
 	  exit 2; \
 	fi
 
+# Allow developers to step into the containerized development environment
+dev: check-docker
+	${DEV_ENV_CMD_INT} bash
+
 # Containerized dependency resolution
 bootstrap: check-docker
 	${DEV_ENV_CMD} glide install
@@ -52,7 +55,7 @@ build-with-container: check-docker
 	${DEV_ENV_CMD} make build-binary
 	docker build --rm -t ${IMAGE} image
 
-build: build-binary docker-build
+build: build-with-container docker-build
 
 push: docker-push
 
@@ -70,24 +73,22 @@ update-manifests:
 	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
 
 build-binary:
-	glide update
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags ${LDFLAGS} -o $(BINARY_DEST_DIR)/logger main.go
 
 test: test-style test-unit
 
-test-style:
+test-style: check-docker
+	${DEV_ENV_CMD} make style-check
+
+style-check:
 # display output, then check
 	$(GOFMT) $(GO_PACKAGES) $(GO_FILES)
 	@$(GOFMT) $(GO_PACKAGES) $(GO_FILES) | read; if [ $$? == 0 ]; then echo "gofmt check failed."; exit 1; fi
 	$(GOVET) $(REPO_PATH) $(GO_PACKAGES_REPO_PATH)
 	$(GOLINT) ./...
 
-test-unit: test-style
-	$(GOTEST) $(GO_TESTABLE_PACKAGES_REPO_PATH)
-
-coverage:
-	go test -coverprofile coverage.out ./syslog
-	go tool cover -html=coverage.out
+test-unit:
+	${DEV_ENV_CMD} $(GOTEST) $(GO_TESTABLE_PACKAGES_REPO_PATH)
 
 kube-install:
 	kubectl create -f manifests/deis-logger-svc.yaml
