@@ -20,7 +20,7 @@ DEV_ENV_CMD := docker run --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WOR
 DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
 LDFLAGS := "-s -X main.version=${VERSION}"
 
-BINARY_DEST_DIR = image/bin
+BINARY_DEST_DIR = rootfs/bin
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
 BUILD_TAG ?= git-$(shell git rev-parse --short HEAD)
@@ -53,14 +53,14 @@ bootstrap: check-docker
 build-with-container: check-docker
 	mkdir -p ${BINARY_DEST_DIR}
 	${DEV_ENV_CMD} make build-binary
-	docker build --rm -t ${IMAGE} image
+	docker build --rm -t ${IMAGE} rootfs
 
 build: build-with-container docker-build
 
 push: docker-push
 
 docker-build: check-docker
-	docker build -t $(IMAGE_LATEST) image
+	docker build -t $(IMAGE_LATEST) rootfs
 	docker tag -f $(IMAGE_LATEST) $(IMAGE)
 
 docker-push: check-docker
