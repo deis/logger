@@ -20,7 +20,7 @@ DEV_ENV_CMD := docker run --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WOR
 DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
 LDFLAGS := "-s -X main.version=${VERSION}"
 
-BINARY_DEST_DIR = rootfs/bin
+BINARY_DEST_DIR = rootfs/opt/logger/sbin
 
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
 BUILD_TAG ?= git-$(shell git rev-parse --short HEAD)
