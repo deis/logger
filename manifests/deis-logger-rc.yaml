@@ -23,9 +23,6 @@ spec:
         - containerPort: 1514
           name: transport
           protocol: UDP
-        env:
-        - name: "DRAIN_URL"
-          value: "tcp://logs.papertrailapp.com:57926"
         livenessProbe:
           httpGet:
             path: /healthz

@@ -17,11 +17,10 @@ var (
 	// less confusion.
 	storageType = getopt("STORAGE_ADAPTER", "memory")
 	numLines, _ = strconv.Atoi(getopt("NUMBER_OF_LINES", "1000"))
-	drainURL    = getopt("DRAIN_URL", "")
 )
 
 func main() {
-	syslogishServer, err := syslogish.NewServer(storageType, numLines, drainURL)
+	syslogishServer, err := syslogish.NewServer(storageType, numLines)
 	if err != nil {
 		log.Fatal("Error creating syslogish server", err)
 	}

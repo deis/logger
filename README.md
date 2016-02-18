@@ -24,7 +24,6 @@ The following environment variables can be used to configure logger:
 
 * `STORAGE_ADAPTER`: How to store logs that are sent to the logger interface. Default is `memory`
 * `NUMBER_OF_LINES`: How many lines to store in the ring buffer. Default is `1000`.
-* `DRAIN_URL`: Syslog server that the logger component can send data to. No default.
 
 ## Development
 The only assumption this project makes about your environment is that you have a working docker host to build the image against.

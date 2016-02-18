@@ -5,9 +5,9 @@ GOLINT = golint
 GOTEST = $(GO) test --cover --race -v
 GOVET = $(GO) vet
 GO_FILES = $(wildcard *.go)
-GO_PACKAGES = drain storage syslogish weblog
+GO_PACKAGES = storage syslogish weblog
 GO_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,$(GO_PACKAGES))
-GO_TESTABLE_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,drain drain/simple storage storage/file storage/ringbuffer)
+GO_TESTABLE_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,storage storage/file storage/ringbuffer)
 
 # the filepath to this repository, relative to $GOPATH/src
 REPO_PATH = github.com/deis/logger
