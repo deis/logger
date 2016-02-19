@@ -11,13 +11,14 @@ import (
 const app string = "test-app"
 
 func TestReadFromNonExistingApp(t *testing.T) {
-	logRoot, err := ioutil.TempDir("", "log-tests")
+	var err error
+	logRoot, err = ioutil.TempDir("", "log-tests")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
 	// Initialize a new storage adapter
-	a, err := NewStorageAdapter(logRoot)
+	a, err := NewStorageAdapter()
 	if err != nil {
 		t.Error(err)
 	}
@@ -31,38 +32,14 @@ func TestReadFromNonExistingApp(t *testing.T) {
 	}
 }
 
-func TestWithBadLogRoot(t *testing.T) {
-	// Initialize with bad log path (doesn't exist)
-	bogusLogRoot := "/bogus/path"
-	a, err := NewStorageAdapter(bogusLogRoot)
-	if a != nil {
-		t.Error("Expected no storage adapter, but got one")
-	}
-	if err == nil || err.Error() != fmt.Sprintf("Directory %s does not exist", bogusLogRoot) {
-		t.Error("Did not receive expected error message")
-	}
-	// Create a temporary file
-	file, err := ioutil.TempFile("", "log-file")
-	if err != nil {
-		t.Error(err)
-	}
-	defer os.Remove(file.Name())
-	a, err = NewStorageAdapter(file.Name())
-	if a != nil {
-		t.Error("Expected no storage adapter, but got one")
-	}
-	if err == nil || err.Error() != fmt.Sprintf("%s is not a directory", file.Name()) {
-		t.Error("Did not receive expected error message")
-	}
-}
-
 func TestLogs(t *testing.T) {
-	logRoot, err := ioutil.TempDir("", "log-tests")
+	var err error
+	logRoot, err = ioutil.TempDir("", "log-tests")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
-	a, err := NewStorageAdapter(logRoot)
+	a, err := NewStorageAdapter()
 	if err != nil {
 		t.Error(err)
 	}
@@ -99,12 +76,13 @@ func TestLogs(t *testing.T) {
 }
 
 func TestDestroy(t *testing.T) {
-	logRoot, err := ioutil.TempDir("", "log-tests")
+	var err error
+	logRoot, err = ioutil.TempDir("", "log-tests")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
-	a, err := NewStorageAdapter(logRoot)
+	a, err := NewStorageAdapter()
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,12 +110,13 @@ func TestDestroy(t *testing.T) {
 }
 
 func TestReopen(t *testing.T) {
-	logRoot, err := ioutil.TempDir("", "log-tests")
+	var err error
+	logRoot, err = ioutil.TempDir("", "log-tests")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
-	a, err := NewStorageAdapter(logRoot)
+	a, err := NewStorageAdapter()
 	if err != nil {
 		t.Error(err)
 	}

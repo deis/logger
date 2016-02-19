@@ -22,13 +22,8 @@ We have also decided to not use `logspout` as the mechanism to get logs from eac
 ## Running logger v2
 The following environment variables can be used to configure logger:
 
-* `LOGGER_ADDR`: The interface to bind the logging adapter to. Default is `0.0.0.0`.
-* `LOGGER_PORT`: The port that the logger adapter is listening on. Default is `514`.
-* `WEB_ADDR`: The interface to bind the web server to. Default is `0.0.0.0`.
-* `WEB_PORT`: The port that the web server is listening on. Default is `8088`.
 * `STORAGE_ADAPTER`: How to store logs that are sent to the logger interface. Default is `memory`
 * `NUMBER_OF_LINES`: How many lines to store in the ring buffer. Default is `1000`.
-* `LOG_PATH`: The path of where to store files when using the file storage adapter. Default is `/data/logs`.
 * `DRAIN_URL`: Syslog server that the logger component can send data to. No default.
 
 ## Development
