@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/deis/logger/drain"
 	"github.com/deis/logger/storage"
 )
 
@@ -35,14 +34,11 @@ type Server struct {
 	listening      bool
 	storageQueue   chan string
 	storageAdapter storage.Adapter
-	drainageQueue  chan string
-	drain          drain.LogDrain
 	adapterMutex   sync.RWMutex
-	drainMutex     sync.RWMutex
 }
 
 // NewServer returns a pointer to a new Server instance.
-func NewServer(storageType string, numLines int, drainURL string) (*Server, error) {
+func NewServer(storageType string, numLines int) (*Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", bindHost, bindPort))
 	if err != nil {
 		return nil, err
@@ -57,17 +53,10 @@ func NewServer(storageType string, numLines int, drainURL string) (*Server, erro
 		return nil, fmt.Errorf("configurer: Error creating storage adapter: %v", err)
 	}
 
-	newDrain, err := drain.NewDrain(drainURL)
-	if err != nil {
-		return nil, fmt.Errorf("configurer: Error creating drain: %v", err)
-	}
-
 	return &Server{
 		conn:           c,
 		storageQueue:   make(chan string, queueSize),
-		drainageQueue:  make(chan string, queueSize),
 		storageAdapter: newStorageAdapter,
-		drain:          newDrain,
 	}, nil
 }
 
@@ -81,15 +70,6 @@ func (s *Server) SetStorageAdapter(storageAdapter storage.Adapter) {
 	s.storageAdapter = storageAdapter
 }
 
-// SetDrain permits a server's underlying drain.LogDrain to be reconfigured (replaced) at runtime.
-func (s *Server) SetDrain(drain drain.LogDrain) {
-	// Get an exclusive lock before updating the internal pointer to the log drain.  Other
-	// goroutines holding read locks might depend on that pointer as it currently exists.
-	s.drainMutex.Lock()
-	defer s.drainMutex.Unlock()
-	s.drain = drain
-}
-
 // Listen starts the server's main loop.
 func (s *Server) Listen() {
 	// Should only ever be called once
@@ -97,7 +77,6 @@ func (s *Server) Listen() {
 		s.listening = true
 		go s.receive()
 		go s.processStorage()
-		go s.processDrainage()
 		log.Println("syslogish server running")
 	}
 }
@@ -162,41 +141,9 @@ func (s *Server) processStorage() {
 						// above with the added disadvantages of flapping.
 					}
 					s.adapterMutex.RUnlock()
-					// Add the message to the drainage queue.  This allows the storage loop to continue right
-					// away instead of waiting while the message is sent to an external service-- since that
-					// could be a bottleneck and error prone depending on rate limiting, network congestion,
-					// etc.
-					select {
-					case s.drainageQueue <- message:
-					default:
-					}
 				}
 			}
 		}
-	}
-}
-
-func (s *Server) processDrainage() {
-	for message := range s.drainageQueue {
-		// Get a read lock to ensure the drain pointer can't be nilled by the configurer in the time
-		// between we check if it's nil and the time we invoke .Send() upon it.
-		s.drainMutex.RLock()
-		// DONT'T defer unlocking... defered statements are executed when the function returns, but
-		// we are inside an infinite loop here.  If we defer, we would never release the lock.
-		// Instead, release it manually below.
-		if s.drain != nil {
-			s.drain.Send(message)
-			// We don't bother trapping errors here, so failed sends to the drain are silent.  This is
-			// by design.  If we sent a log message to STDOUT in response to the failure, deis-logspout
-			// would read it and forward it back to deis-logger, which would fail again to send to the
-			// drain and spawn ANOTHER log message.  The effect would be an infinite loop of undrainable
-			// log messages that would nevertheless fill up journal logs and eventually overake the disk.
-			//
-			// Treating this as a fatal event would cause the deis-logger unit to restart-- sending
-			// even more log messages to STDOUT.  The overall effect would be the same as described
-			// above with the added disadvantages of flapping.
-		}
-		s.drainMutex.RUnlock()
 	}
 }
 
