@@ -14,7 +14,11 @@ import (
 	"github.com/deis/logger/storage"
 )
 
-const queueSize = 500
+const (
+	bindHost  = "0.0.0.0"
+	bindPort  = 1514
+	queueSize = 500
+)
 
 var appRegex *regexp.Regexp
 
@@ -38,7 +42,7 @@ type Server struct {
 }
 
 // NewServer returns a pointer to a new Server instance.
-func NewServer(bindHost string, bindPort int, storageType string, numLines int, logPath string, drainURL string) (*Server, error) {
+func NewServer(storageType string, numLines int, drainURL string) (*Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", bindHost, bindPort))
 	if err != nil {
 		return nil, err
@@ -48,7 +52,7 @@ func NewServer(bindHost string, bindPort int, storageType string, numLines int, 
 		return nil, err
 	}
 
-	newStorageAdapter, err := storage.NewAdapter(storageType, numLines, logPath)
+	newStorageAdapter, err := storage.NewAdapter(storageType, numLines)
 	if err != nil {
 		return nil, fmt.Errorf("configurer: Error creating storage adapter: %v", err)
 	}

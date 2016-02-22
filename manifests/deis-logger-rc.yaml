@@ -20,7 +20,7 @@ spec:
         ports:
         - containerPort: 8088
           name: http
-        - containerPort: 514
+        - containerPort: 1514
           name: transport
           protocol: UDP
         env:

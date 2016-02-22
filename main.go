@@ -15,22 +15,17 @@ var (
 	// TODO: When semver permits us to do so, many of these flags should probably be phased out in
 	// favor of just using environment variables.  Fewer avenues of configuring this component means
 	// less confusion.
-	logAddr     = getopt("LOGGER_ADDR", "0.0.0.0")
-	logPort, _  = strconv.Atoi(getopt("LOGGER_PORT", "514"))
-	logPath     = getopt("LOG_PATH", "/data/logs")
-	webAddr     = getopt("WEB_ADDR", "0.0.0.0")
-	webPort, _  = strconv.Atoi(getopt("WEB_PORT", "8088"))
 	storageType = getopt("STORAGE_ADAPTER", "memory")
 	numLines, _ = strconv.Atoi(getopt("NUMBER_OF_LINES", "1000"))
 	drainURL    = getopt("DRAIN_URL", "")
 )
 
 func main() {
-	syslogishServer, err := syslogish.NewServer(logAddr, logPort, storageType, numLines, logPath, drainURL)
+	syslogishServer, err := syslogish.NewServer(storageType, numLines, drainURL)
 	if err != nil {
 		log.Fatal("Error creating syslogish server", err)
 	}
-	weblogServer, err := weblog.NewServer(webAddr, webPort, syslogishServer)
+	weblogServer, err := weblog.NewServer(syslogishServer)
 	if err != nil {
 		log.Fatal("Error creating weblog server", err)
 	}

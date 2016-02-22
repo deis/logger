@@ -10,22 +10,16 @@ import (
 	"sync"
 )
 
+var logRoot = "/data/logs"
+
 type adapter struct {
-	logRoot string
-	files   map[string]*os.File
-	mutex   sync.Mutex
+	files map[string]*os.File
+	mutex sync.Mutex
 }
 
 // NewStorageAdapter returns a pointer to a new instance of a file-based storage.Adapter.
-func NewStorageAdapter(logRoot string) (*adapter, error) {
-	src, err := os.Stat(logRoot)
-	if err != nil {
-		return nil, fmt.Errorf("Directory %s does not exist", logRoot)
-	}
-	if !src.IsDir() {
-		return nil, fmt.Errorf("%s is not a directory", logRoot)
-	}
-	return &adapter{logRoot: logRoot, files: make(map[string]*os.File)}, nil
+func NewStorageAdapter() (*adapter, error) {
+	return &adapter{files: make(map[string]*os.File)}, nil
 }
 
 // Write adds a log message to to an app-specific log file
@@ -125,7 +119,7 @@ func (a *adapter) getFile(app string) (*os.File, error) {
 }
 
 func (a *adapter) getFilePath(app string) string {
-	return path.Join(a.logRoot, app+".log")
+	return path.Join(logRoot, app+".log")
 }
 
 func fileExists(path string) (bool, error) {
