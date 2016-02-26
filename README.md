@@ -6,7 +6,7 @@ applications on your own servers. Deis builds on [Kubernetes](http://kubernetes.
 a lightweight, [Heroku-inspired](http://heroku.com) workflow.
 
 ![Deis Graphic](https://s3-us-west-2.amazonaws.com/get-deis/deis-graphic-small.png)
- 
+
 A system logger for use in the [Deis](http://deis.io) open source PaaS.
 
 This Docker image is based on the official
@@ -17,13 +17,50 @@ The new v2 logger implementation has seen a simplification from the last rewrite
 
 We have also decided to not use `logspout` as the mechanism to get logs from each container to the `logger` component. Now we will use [fluentd](http://fluentd.org) which is a widely supported logging framework with hundreds of plugins. This will allow the end user to configure multiple destinations such as Elastic Search and other Syslog compatible endpoints like [papertrail](http://papertrailapp.com).
 
-** This image requires that the `daemonsets` api be available on the kubernetes cluster** For more information on running the `daemonsets` api see the [following](https://github.com/kubernetes/kubernetes/blob/master/docs/api.md#enabling-resources-in-the-extensions-group).
+** This image requires that the `Daemon Sets` api be available on the kubernetes cluster** For more information on running the `Daemon Sets` api see the [following](https://github.com/kubernetes/kubernetes/blob/master/docs/api.md#enabling-resources-in-the-extensions-group).
 
 ## Running logger v2
 The following environment variables can be used to configure logger:
 
 * `STORAGE_ADAPTER`: How to store logs that are sent to the logger interface. Default is `memory`
 * `NUMBER_OF_LINES`: How many lines to store in the ring buffer. Default is `1000`.
+
+### Installation
+Because of the requirement of Daemon Sets we have chosen not to include the logging components in the main [Deis chart](https://github.com/deis/charts/tree/master/deis).
+
+To install the logging system please do the following:
+
+```
+$ helm repo add deis https://github.com/deis/charts
+$ helm install deis/deis-logger
+```
+Watch for the logging components to come up:
+
+```
+$ kubectl get pods --namespace=deis
+```
+
+You should see output similar to this:
+
+```
+NAME                        READY     STATUS    RESTARTS   AGE
+deis-builder-knypb          1/1       Running   0          1d
+deis-database-ldbam         1/1       Running   0          2h
+deis-logger-fluentd-tq187   1/1       Running   0          1d
+deis-logger-iwos5           1/1       Running   0          2d
+deis-minio-zlmk8            1/1       Running   0          3d
+deis-registry-bys9n         1/1       Running   0          3d
+deis-router-h5f0i           1/1       Running   0          3d
+deis-workflow-2v84b         1/1       Running   3          2d
+```
+
+After the logging components are installed you will need to restart the `deis-workflow` pod so it can pick up the new service endpoint for the logger component.
+
+```
+$ kubectl delete pod <workflow pod name>
+```
+
+The replication controller should immediately restart a new pod. Now you can use the `deis logs` command for your applications.
 
 ## Development
 The only assumption this project makes about your environment is that you have a working docker host to build the image against.
