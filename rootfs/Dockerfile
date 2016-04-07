@@ -1,8 +1,9 @@
 FROM alpine:3.3
 
 # add logger user
-RUN addgroup -S logger && \
-	adduser -S -G logger -H -h /opt/logger -D logger
+RUN mkdir -p /opt/logger && \
+		addgroup -S logger && \
+		adduser -S -G logger -H -h /opt/logger -D logger
 
 ADD . /
 
