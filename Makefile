@@ -27,13 +27,8 @@ BUILD_TAG ?= git-$(shell git rev-parse --short HEAD)
 SHORT_NAME ?= logger
 DEIS_REGISTRY ?= ${DEV_REGISTRY}
 IMAGE_PREFIX ?= deis
-IMAGE_LATEST := ${DEIS_REGISTRY}${IMAGE_PREFIX}/${SHORT_NAME}:latest
-IMAGE := ${DEIS_REGISTRY}${IMAGE_PREFIX}/${SHORT_NAME}:${BUILD_TAG}
 
-info:
-	@echo "Build tag:  ${BUILD_TAG}"
-	@echo "Registry:   ${DEIS_REGISTRY}"
-	@echo "Image:      ${IMAGE}"
+include versioning.mk
 
 check-docker:
 	@if [ -z $$(which docker) ]; then \
@@ -49,6 +44,10 @@ dev: check-docker
 bootstrap: check-docker
 	${DEV_ENV_CMD} glide install
 
+# This is so you can build the binary without using docker
+build-binary:
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags ${LDFLAGS} -o $(BINARY_DEST_DIR)/logger main.go
+
 # Containerized build of the binary
 build-with-container: check-docker
 	mkdir -p ${BINARY_DEST_DIR}
@@ -59,21 +58,15 @@ build: build-with-container docker-build
 
 push: docker-push
 
-docker-build: check-docker
-	docker build -t $(IMAGE_LATEST) rootfs
-	docker tag -f $(IMAGE_LATEST) $(IMAGE)
-
-docker-push: check-docker
-	docker push $(IMAGE)
+docker-build:
+	docker build -t ${IMAGE} rootfs
+	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
 clean: check-docker
 	docker rmi $(IMAGE)
 
 update-manifests:
 	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
-
-build-binary:
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags ${LDFLAGS} -o $(BINARY_DEST_DIR)/logger main.go
 
 test: test-style test-unit
 
