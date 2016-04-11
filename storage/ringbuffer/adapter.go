@@ -67,12 +67,12 @@ func NewStorageAdapter(bufferSize int) (*adapter, error) {
 func (a *adapter) Write(app string, message string) error {
 	// Check first if we might actually have to add to the map of ringBuffer pointers so we can avoid
 	// waiting for / obtaining a lock unnecessarily
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 	rb, ok := a.ringBuffers[app]
 	if !ok {
 		// Ensure only one goroutine at a time can be adding a ringBuffer to the map of ringBuffers
 		// pointers
-		a.mutex.Lock()
-		defer a.mutex.Unlock()
 		rb, ok = a.ringBuffers[app]
 		if !ok {
 			log.Printf("Creating buffer for app:%v", app)
