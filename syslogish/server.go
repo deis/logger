@@ -8,7 +8,6 @@ import (
 	"net"
 	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/deis/logger/storage"
 )
@@ -34,7 +33,6 @@ type Server struct {
 	listening      bool
 	storageQueue   chan string
 	storageAdapter storage.Adapter
-	adapterMutex   sync.RWMutex
 }
 
 // NewServer returns a pointer to a new Server instance.
@@ -63,10 +61,6 @@ func NewServer(storageType string, numLines int) (*Server, error) {
 // SetStorageAdapter permits a server's underlying storage.Adapter to be reconfigured (replaced)
 // at runtime.
 func (s *Server) SetStorageAdapter(storageAdapter storage.Adapter) {
-	// Get an exclusive lock before updating the internal pointer to the storage adapter.  Other
-	// goroutines holding read locks might depend on that pointer as it currently exists.
-	s.adapterMutex.Lock()
-	defer s.adapterMutex.Unlock()
 	s.storageAdapter = storageAdapter
 }
 
@@ -116,13 +110,6 @@ func (s *Server) processStorage() {
 				labels := messageJSON["kubernetes"].(map[string]interface{})["labels"].(map[string]interface{})
 				// We only want to store deis app log messages
 				if labels != nil && labels["app"] != nil && labels["heritage"] != nil && labels["heritage"].(string) == "deis" {
-					// Get a read lock to ensure the storage adapater pointer can't be nilled by the
-					// configurer in the time between we check if it's nil and the time we invoke .Write()
-					// upon it.
-					s.adapterMutex.RLock()
-					// DONT'T defer unlocking... defered statements are executed when the function returns,
-					// but we are inside an infinite loop here.  If we defer, we would never release the
-					// lock.  Instead, release it manually below.
 					if s.storageAdapter != nil {
 						app := labels["app"].(string)
 						body := messageJSON["log"].(string)
@@ -140,7 +127,6 @@ func (s *Server) processStorage() {
 						// even more log messages to STDOUT.  The overall effect would be the same as described
 						// above with the added disadvantages of flapping.
 					}
-					s.adapterMutex.RUnlock()
 				}
 			}
 		}
@@ -150,11 +136,6 @@ func (s *Server) processStorage() {
 // ReadLogs returns a specified number of log lines (if available) for a specified app by
 // delegating to the server's underlying storage.Adapter.
 func (s *Server) ReadLogs(app string, lines int) ([]string, error) {
-	// Get a read lock to ensure the storage adapater pointer can't be updated by another
-	// goroutine in the time between we check if it's nil and the time we invoke .Read() upon
-	// it.
-	s.adapterMutex.RLock()
-	defer s.adapterMutex.RUnlock()
 	if s.storageAdapter == nil {
 		return nil, fmt.Errorf("Could not find logs for '%s'.  No storage adapter specified.", app)
 	}
@@ -164,11 +145,6 @@ func (s *Server) ReadLogs(app string, lines int) ([]string, error) {
 // DestroyLogs deletes all logs for a specified app by delegating to the server's underlying
 // storage.Adapter.
 func (s *Server) DestroyLogs(app string) error {
-	// Get a read lock to ensure the storage adapater pointer can't be updated by another
-	// goroutine in the time between we check if it's nil and the time we invoke .Destroy() upon
-	// it.
-	s.adapterMutex.RLock()
-	defer s.adapterMutex.RUnlock()
 	if s.storageAdapter == nil {
 		return fmt.Errorf("Could not destroy logs for '%s'.  No storage adapter specified.", app)
 	}
@@ -179,11 +155,6 @@ func (s *Server) DestroyLogs(app string) error {
 // references to underlying storage mechanisms.  This is useful, for instance, to ensure logging
 // continues smoothly after log rotation when file-based storage is in use.
 func (s *Server) ReopenLogs() error {
-	// Get a read lock to ensure the storage adapater pointer can't be updated by another
-	// goroutine in the time between we check if it's nil and the time we invoke .Reopen() upon
-	// it.
-	s.adapterMutex.RLock()
-	defer s.adapterMutex.RUnlock()
 	if s.storageAdapter == nil {
 		return errors.New("Could not reopen logs.  No storage adapter specified.")
 	}
