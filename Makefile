@@ -30,6 +30,8 @@ IMAGE_PREFIX ?= deis
 
 include versioning.mk
 
+SHELL_SCRIPTS = $(wildcard _scripts/*.sh)
+
 check-docker:
 	@if [ -z $$(which docker) ]; then \
 	  echo "Missing docker client which is required for development"; \
@@ -79,6 +81,7 @@ style-check:
 	@$(GOFMT) $(GO_PACKAGES) $(GO_FILES) | read; if [ $$? == 0 ]; then echo "gofmt check failed."; exit 1; fi
 	$(GOVET) $(REPO_PATH) $(GO_PACKAGES_REPO_PATH)
 	$(GOLINT) ./...
+	shellcheck $(SHELL_SCRIPTS)
 
 test-unit:
 	${DEV_ENV_CMD} $(GOTEST) $(GO_TESTABLE_PACKAGES_REPO_PATH)
