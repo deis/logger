@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	bindHost  = "0.0.0.0"
-	bindPort  = 1514
-	queueSize = 500
+	bindHost          = "0.0.0.0"
+	bindPort          = 1514
+	queueSize         = 500
+	controllerPattern = `^(INFO|WARN|DEBUG|ERROR)\s+(\[(\S+)\])+:(.*)`
 )
 
 var appRegex *regexp.Regexp
@@ -105,7 +106,11 @@ func (s *Server) processStorage() {
 			if err == nil && fromKubernetes(messageJSON) && !fromContainer(messageJSON, "(deis-logger.*)") {
 				labels := getLabels(messageJSON)
 				if fromDeisApp(labels) {
-					s.storageAdapter.Write(labels["app"].(string), buildLogMessage(messageJSON))
+					s.storageAdapter.Write(labels["app"].(string), buildApplicationLogMessage(messageJSON))
+				} else if fromController(messageJSON) {
+					s.storageAdapter.Write(
+						getApplicationFromControllerMessage(messageJSON),
+						messageJSON["log"].(string))
 				}
 			}
 		}
@@ -139,7 +144,17 @@ func fromContainer(json map[string]interface{}, pattern string) bool {
 	return matched
 }
 
-func buildLogMessage(json map[string]interface{}) string {
+func fromController(json map[string]interface{}) bool {
+	matched, _ := regexp.MatchString(controllerPattern, json["log"].(string))
+	return matched
+}
+
+func getApplicationFromControllerMessage(json map[string]interface{}) string {
+	regex, _ := regexp.Compile(controllerPattern)
+	return regex.FindStringSubmatch(json["log"].(string))[3]
+}
+
+func buildApplicationLogMessage(json map[string]interface{}) string {
 	body := json["log"].(string)
 	podName := json["kubernetes"].(map[string]interface{})["pod_name"].(string)
 	return fmt.Sprintf("%s -- %s", podName, body)
