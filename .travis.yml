@@ -12,15 +12,3 @@ install:
   - make bootstrap
 script:
   - make build test
-deploy:
-  provider: script
-  script: _scripts/deploy.sh
-  on:
-    branch: master
-notifications:
-  webhooks:
-    urls:
-      - secure: "r3j/rCqlw8EvzkqBQYSwiXRB5C2mhJ2Mh2O/DDHN/0WTN2J7xlBPuEfodswBl6cSOaOYnMxlr04Nm6vU5zcEcOA72/xZPCNr4pqTEnchcmwPSd2FUZNtyE2j+RoP7YzXCdw9MvAToalTdBe1BqFBUG8dSzNE5WBOP3xFYH6TBFA8tfSCa6H2c9AvYTdiTiu7MvLqw1qAACkL82/TmKZ28F3D5ZsY/ZptyYZIh/23RIgt2pHbYmy0h2cZlHWSye1Woqo6VTRnGfvVPf/vmip+4irWQU74Vk01io2PSzBKW1PuHAgIB1IdzkjszLU58ppuvK/BFpn8WwsZPpi6syH70x2kDuXYYnjHQ7purIqKUpT06xebO0YTBkTZfcKKC99+vARhbVawJLEIEdAr2W/SZCQUOa1K9v0vj4xZcIsqLzVW9IFKMY5keBpDVOq6ubbzYcO8lD2y3kemGmx2VIdJgEyhV234gQ8jFwJhfBz2O+Q1QjFe4D5Da0oFOGDOIirarONlQTnEi7rkjaOiDSVh+OMjYqJBG2GIqJiAs+SHAhEtbbb4rZkt0vbi26PyStAsIMWbXUXHppYJ8tzbDAGOVp437KG7Uz7zgMQdpDaq5YHzsSAZghLuUVGSaVo10IUBcz88qiRJt2bAmcRwVpiMAzyIoCbqZDsKLenFM6o4nk8="
-    on_success: always
-    on_failure: never
-    on_start: never
