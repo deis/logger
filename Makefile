@@ -50,17 +50,21 @@ bootstrap: check-docker
 build-binary:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags ${LDFLAGS} -o $(BINARY_DEST_DIR)/logger main.go
 
+build: build-with-container docker-build
+
 # Containerized build of the binary
 build-with-container: check-docker
 	mkdir -p ${BINARY_DEST_DIR}
 	${DEV_ENV_CMD} make build-binary
 	docker build --rm -t ${IMAGE} rootfs
 
-build: build-with-container docker-build
+build-without-container: build-binary
+	docker build -t ${IMAGE} rootfs
+	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
 push: docker-push
 
-docker-build:
+docker-build: build-with-container
 	docker build -t ${IMAGE} rootfs
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
