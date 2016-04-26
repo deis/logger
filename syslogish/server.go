@@ -16,7 +16,7 @@ const (
 	bindHost          = "0.0.0.0"
 	bindPort          = 1514
 	queueSize         = 500
-	controllerPattern = `^(INFO|WARN|DEBUG|ERROR)\s+(\[(\S+)\])+:(.*)`
+	controllerPattern = `(INFO|WARN|DEBUG|ERROR)\s+(\[(\S+)\])+:(.*)`
 )
 
 var appRegex *regexp.Regexp
