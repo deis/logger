@@ -1,3 +1,19 @@
+### v2.0.0-beta2 -> v2.0.0-beta3
+
+#### Features
+
+ - [`d1691c7`](https://github.com/deis/logger/commit/d1691c7c59731afd8d6f36b18f5e913c88e4dfa0) Makefile: add shellcheck to check-style target
+
+#### Fixes
+
+ - [`c18591c`](https://github.com/deis/logger/commit/c18591cbf30d6f847ede0845a69b390e8851a9cc) server: Add deis event messages to application log stream
+ - [`74eb4bb`](https://github.com/deis/logger/commit/74eb4bb413e43d5db431bde93ab5905a65db7b59) makefile: docker-build should build the binary in a container first
+
+#### Maintenance
+
+ - [`a881fdf`](https://github.com/deis/logger/commit/a881fdfcbadd5e3afb33682efdc3a786789a5b7c) .travis.yml: Deep six the travis -> jenkins webhooks
+ - [`959973e`](https://github.com/deis/logger/commit/959973ec307a21fd0241935cfbce1e6d1bfc3858) Makefile: update go-dev image to 0.11.0
+
 ### v2.0.0-beta1 -> v2.0.0-beta2
 
 #### Features
