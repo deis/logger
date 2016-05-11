@@ -1,3 +1,9 @@
+### v2.0.0-beta3 -> v2.0.0-beta4
+
+#### Documentation
+
+ - [`e835c37`](https://github.com/deis/logger/commit/e835c3735e4aca27d62a41557ac2e2606a0ae558) CHANGELOG.md: update for v2.0.0-beta3
+
 ### v2.0.0-beta2 -> v2.0.0-beta3
 
 #### Features
