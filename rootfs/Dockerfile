@@ -15,4 +15,4 @@ USER logger
 CMD ["/opt/logger/sbin/logger"]
 EXPOSE 1514 8088
 
-ENV DEIS_RELEASE v2-beta
+ENV WORKFLOW_RELEASE v2-beta
