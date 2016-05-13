@@ -50,7 +50,8 @@ func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Returning the last %v lines for %s", logLines, app)
 	for _, line := range logs {
-		fmt.Fprintf(w, "%s\n", line)
+		// strip any trailing newline characters from the logs
+		fmt.Fprintf(w, "%s\n", strings.TrimSuffix(line, "\n"))
 	}
 }
 
