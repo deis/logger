@@ -1,13 +1,16 @@
-FROM alpine:3.3
+FROM quay.io/deis/base:0.2.0
 
-# add logger user
-RUN mkdir -p /opt/logger && \
-		addgroup -S logger && \
-		adduser -S -G logger -H -h /opt/logger -D logger
+# Add logger user and group
+RUN adduser --system \
+	--shell /bin/bash \
+	--disabled-password \
+	--home /opt/logger \
+	--group \
+	logger
 
-ADD . /
+COPY . /
 
-# Fix some permission since we'll be running as a non-root user.
+# Fix some permission since we'll be running as a non-root user
 RUN chown -R logger:logger /opt/logger
 
 USER logger
@@ -15,4 +18,4 @@ USER logger
 CMD ["/opt/logger/sbin/logger"]
 EXPOSE 1514 8088
 
-ENV WORKFLOW_RELEASE v2-beta
+ENV WORKFLOW_RELEASE 2.0.0
