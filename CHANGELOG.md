@@ -1,3 +1,14 @@
+### v2.0.0-beta4 -> v2.0.0-rc1
+
+#### Fixes
+
+ - [`b264d94`](https://github.com/deis/logger/commit/b264d940ecc70112b9030a04bcf3d8b344b024f0) weblog: strip newline characters from log line
+
+#### Maintenance
+
+ - [`65eb729`](https://github.com/deis/logger/commit/65eb7295fbc0fbe5a6eb2e4307a34c032079d168) Dockerfile: Refactor image to use ubuntu-slim
+ - [`c068fc5`](https://github.com/deis/logger/commit/c068fc524bb3fd13df0169a1ab94e5c0aca68d7a) rootfs/Dockerfile: DEIS_RELEASE -> WORKFLOW_RELEASE
+
 ### v2.0.0-beta3 -> v2.0.0-beta4
 
 #### Documentation
