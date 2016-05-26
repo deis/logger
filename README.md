@@ -1,5 +1,6 @@
 # Deis Logger
 [![Build Status](https://travis-ci.org/deis/logger.svg?branch=master)](https://travis-ci.org/deis/logger)
+[![codecov.io](https://codecov.io/github/deis/logger/coverage.svg?branch=master)](https://codecov.io/github/deis/logger?branch=master)
 [![Go Report Card](http://goreportcard.com/badge/deis/logger)](http://goreportcard.com/report/deis/logger)
 [![Docker Repository on Quay](https://quay.io/repository/deis/logger/status "Docker Repository on Quay")](https://quay.io/repository/deis/logger)
 
