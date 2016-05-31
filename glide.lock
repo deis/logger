@@ -1,8 +1,23 @@
-hash: bfc38dbd1902d5055a117b3b13a176b3c41c2f3cba9791479b164adffd054621
-updated: 2016-02-17T20:39:56.995047849Z
+hash: 9721be2241f2b9f8a46e3e1dc190fc1f2d4c2febd6e9cf155809733d12b2ab35
+updated: 2016-06-14T11:30:21.089555208-06:00
 imports:
+- name: github.com/crackcomm/nsqueue
+  version: ace189677cc63933dc75a0ce689cedff04887f2f
+  subpackages:
+  - consumer
+  - nsqlog
 - name: github.com/gorilla/context
   version: 1c83b3eabd45b6d76072b66b746c20815fb2872d
 - name: github.com/gorilla/mux
   version: 26a6070f849969ba72b72256e9f14cf519751690
+- name: github.com/mreiferson/go-snappystream
+  version: 028eae7ab5c4c9e2d1cb4c4ca1e53259bbe7e504
+  subpackages:
+  - snappy-go
+- name: github.com/nsqio/go-nsq
+  version: d71fb89c9e0263aaed89645b0b168e11ccf597b1
+- name: golang.org/x/net
+  version: 3f122ce3dbbe488b7e6a8bdb26f41edec852a40b
+  subpackages:
+  - context
 devImports: []

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/deis/logger/syslogish"
+	"github.com/deis/logger/logs"
 	"github.com/gorilla/mux"
 )
 
@@ -23,9 +23,9 @@ type Server struct {
 }
 
 // NewServer returns a pointer to a new Server instance.
-func NewServer(syslogishServer *syslogish.Server) (*Server, error) {
+func NewServer(logger *logs.Logger) (*Server, error) {
 	return &Server{
-		router: newRouter(newRequestHandler(syslogishServer)),
+		router: newRouter(newRequestHandler(logger)),
 	}, nil
 }
 
