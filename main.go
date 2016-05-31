@@ -3,10 +3,11 @@ package main
 import (
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
-	"github.com/deis/logger/syslogish"
+	"github.com/deis/logger/consumer"
+	"github.com/deis/logger/logs"
+	"github.com/deis/logger/storage"
 	"github.com/deis/logger/weblog"
 )
 
@@ -16,30 +17,65 @@ func main() {
 		log.Fatalf("config error: %s", err)
 	}
 
-	syslogishServer, err := syslogish.NewServer(cfg.StorageType, cfg.NumLines)
+	nsqConsumerStopDur := time.Duration(cfg.NSQConsumerStopDurSec) * time.Second
+
+	storageAdapter, err := storage.NewAdapter(cfg.StorageType, cfg.NumLines)
 	if err != nil {
-		log.Fatal("Error creating syslogish server", err)
+		log.Fatal("Error creating storage adapter:", err)
 	}
-	weblogServer, err := weblog.NewServer(syslogishServer)
+	logger, err := logs.NewLogger(storageAdapter)
+	if err != nil {
+		log.Fatal("Error creating logger", err)
+	}
+
+	weblogServer, err := weblog.NewServer(logger)
 	if err != nil {
 		log.Fatal("Error creating weblog server", err)
 	}
 
-	syslogishServer.Listen()
 	weblogServer.Listen()
-
 	log.Println("deis-logger running")
 
-	// No cleanup is needed upon termination.  The signal to reopen log files (after hypothetical
-	// logroation, for instance), if applicable, is the only signal we'll care about.  Our main loop
-	// will just wait for that signal.
-	reopen := make(chan os.Signal, 1)
-	signal.Notify(reopen, syscall.SIGUSR1)
-
-	for {
-		<-reopen
-		if err := syslogishServer.ReopenLogs(); err != nil {
-			log.Fatal("Error reopening logs", err)
-		}
+	log.Printf("Listening to NSQ on %s", cfg.nsqURL())
+	consumer, err := consumer.NewNSQConsumer(
+		cfg.nsqURL(),
+		cfg.NSQTopic,
+		cfg.NSQChannel,
+		cfg.NSQConsumerNumThreads,
+		nsqMsgHandler(logger),
+	)
+	if err != nil {
+		log.Fatalf("Error creating new NSQ consumer (%s)", err)
 	}
+	defer consumer.Stop(nsqConsumerStopDur)
+	// a channel that never receives, so that we wait either forever or for the consumer to stop
+	alwaysCh := make(chan struct{})
+	stoppedCh := consumer.Stopped()
+	select {
+	case err := <-stoppedCh:
+		if err != nil {
+			log.Fatalf("NSQ consumer has stopped with error (%s)", err)
+		} else {
+			log.Fatalf("NSQ consumer has stopped with no error")
+		}
+	case <-alwaysCh:
+	}
+}
+
+func nsqMsgHandler(logger *logs.Logger) consumer.MessageHandler {
+	return consumer.MessageHandlerFunc(func(msg *consumer.Message) error {
+		if err := logger.WriteLog(msg.Bytes); err != nil {
+			log.Printf("Unable to store message '%s' (%s)", string(msg.Bytes), err)
+			return err
+		}
+		return nil
+	})
+}
+
+func getopt(name, dfault string) string {
+	value := os.Getenv(name)
+	if value == "" {
+		value = dfault
+	}
+	return value
 }

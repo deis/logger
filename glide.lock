@@ -1,10 +1,24 @@
-hash: 6f9906fa7ad40dff07ca13de5a696fa8a010ecb3bece2dc4a528eb994a45baf9
-updated: 2016-06-21T13:14:44.921222388-07:00
+hash: d3849b692f301506bba5ca3f1b29e9659f1011d4d672706cd862f540f714fc7a
+updated: 2016-06-21T16:34:08.40371452-07:00
 imports:
+- name: context
+  version: bc3663df0ac92f928d419e31e0d2af22e683a5a2
+  repo: https://github.com/golang/net.git
+  vcs: git
 - name: github.com/gorilla/context
-  version: 1c83b3eabd45b6d76072b66b746c20815fb2872d
+  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/gorilla/mux
-  version: 26a6070f849969ba72b72256e9f14cf519751690
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
+- name: github.com/mreiferson/go-snappystream
+  version: 028eae7ab5c4c9e2d1cb4c4ca1e53259bbe7e504
+  subpackages:
+  - snappy-go
+- name: github.com/nsqio/go-nsq
+  version: d71fb89c9e0263aaed89645b0b168e11ccf597b1
+- name: golang.org/x/net
+  version: bc3663df0ac92f928d419e31e0d2af22e683a5a2
+  subpackages:
+  - context
 devImports: []

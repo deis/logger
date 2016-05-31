@@ -3,3 +3,10 @@ import:
 - package: github.com/gorilla/mux
 - package: github.com/gorilla/context
 - package: github.com/kelseyhightower/envconfig
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: context
+  repo: https://github.com/golang/net.git
+  vcs: git
+- package: github.com/nsqio/go-nsq
