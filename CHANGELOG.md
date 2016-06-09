@@ -1,3 +1,9 @@
+### v2.0.0-rc2 -> v2.0.0
+
+#### Documentation
+
+- [`f7188cd`](https://github.com/deis/logger/commit/f7188cd9de9a728a43ecff175bc5f33767051860) CHANGELOG.md: add entry for v2.0.0-rc2
+
 ### v2.0.0-rc1 -> v2.0.0-rc2
 
 ### v2.0.0-beta4 -> v2.0.0-rc1
