@@ -1,3 +1,4 @@
 /rootfs/opt/logger/sbin/logger
 /manifests/*.tmp.yaml
 vendor/
+coverage.txt

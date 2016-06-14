@@ -14,7 +14,7 @@ REPO_PATH = github.com/deis/logger
 
 # The following variables describe the containerized development environment
 # and other build options
-DEV_ENV_IMAGE := quay.io/deis/go-dev:0.11.0
+DEV_ENV_IMAGE := quay.io/deis/go-dev:0.13.0
 DEV_ENV_WORK_DIR := /go/src/${REPO_PATH}
 DEV_ENV_CMD := docker run --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
 DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
@@ -75,6 +75,9 @@ update-manifests:
 	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
 
 test: test-style test-unit
+
+test-cover:
+	${DEV_ENV_CMD} test-cover.sh
 
 test-style: check-docker
 	${DEV_ENV_CMD} make style-check
