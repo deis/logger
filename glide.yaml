@@ -4,3 +4,4 @@ import:
 - package: github.com/gorilla/context
 - package: github.com/kelseyhightower/envconfig
 - package: github.com/nsqio/go-nsq
+- package: gopkg.in/redis.v3

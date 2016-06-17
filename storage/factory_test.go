@@ -38,6 +38,18 @@ func TestGetMemoryBasedAdapter(t *testing.T) {
 	}
 }
 
+func TestGetRedisBasedAdapter(t *testing.T) {
+	a, err := NewAdapter("redis", 1)
+	if err != nil {
+		t.Error(err)
+	}
+	expected := "*redis.adapter"
+	aType := reflect.TypeOf(a).String()
+	if aType != expected {
+		t.Errorf("Expected a %s, but got a %s", expected, aType)
+	}
+}
+
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }

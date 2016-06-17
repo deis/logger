@@ -15,8 +15,9 @@ REPO_PATH = github.com/deis/logger
 # and other build options
 DEV_ENV_IMAGE := quay.io/deis/go-dev:0.13.0
 DEV_ENV_WORK_DIR := /go/src/${REPO_PATH}
-DEV_ENV_CMD := docker run --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
-DEV_ENV_CMD_INT := docker run -it --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR} ${DEV_ENV_IMAGE}
+DEV_ENV_OPTS := --rm -v ${CURDIR}:${DEV_ENV_WORK_DIR} -w ${DEV_ENV_WORK_DIR}
+DEV_ENV_CMD := docker run ${DEV_ENV_OPTS} ${DEV_ENV_IMAGE}
+DEV_ENV_CMD_INT := docker run -it ${DEV_ENV_OPTS} ${DEV_ENV_IMAGE}
 LDFLAGS := "-s -X main.version=${VERSION}"
 
 BINARY_DEST_DIR = rootfs/opt/logger/sbin
@@ -28,6 +29,8 @@ DEIS_REGISTRY ?= ${DEV_REGISTRY}
 IMAGE_PREFIX ?= deis
 
 include versioning.mk
+
+REDIS_CONTAINER_NAME := test-redis-${VERSION}
 
 SHELL_SCRIPTS = $(wildcard _scripts/*.sh)
 
@@ -75,8 +78,15 @@ update-manifests:
 
 test: test-style test-unit
 
-test-cover:
-	${DEV_ENV_CMD} test-cover.sh
+test-cover: start-test-redis
+	docker run ${DEV_ENV_OPTS} \
+		-it \
+		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
+		${DEV_ENV_IMAGE} bash -c 'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
+		DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
+		test-cover.sh' \
+		|| (make stop-test-redis && false)
+	make stop-test-redis
 
 test-style: check-docker
 	${DEV_ENV_CMD} make style-check
@@ -89,8 +99,22 @@ style-check:
 	$(GOLINT) ./...
 	shellcheck $(SHELL_SCRIPTS)
 
-test-unit:
-	${DEV_ENV_CMD} $(GOTEST) $$(glide nv)
+start-test-redis:
+	docker run --name ${REDIS_CONTAINER_NAME} -d redis:latest
+
+stop-test-redis:
+	docker kill ${REDIS_CONTAINER_NAME}
+	docker rm ${REDIS_CONTAINER_NAME}
+
+test-unit: start-test-redis
+	docker run ${DEV_ENV_OPTS} \
+		-it \
+		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
+		${DEV_ENV_IMAGE} bash -c 'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
+		DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
+		$(GOTEST) $$(glide nv)' \
+		|| (make stop-test-redis && false)
+	make stop-test-redis
 
 kube-install:
 	kubectl create -f manifests/deis-logger-svc.yaml
