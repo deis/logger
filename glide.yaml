@@ -2,3 +2,9 @@ package: github.com/deis/logger
 import:
 - package: github.com/gorilla/mux
 - package: github.com/gorilla/context
+- package: github.com/crackcomm/nsqueue
+  subpackages:
+  - consumer
+- package: golang.org/x/net
+  subpackages:
+  - context

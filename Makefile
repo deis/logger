@@ -5,7 +5,7 @@ GOLINT = golint
 GOTEST = $(GO) test --cover --race -v
 GOVET = $(GO) vet
 GO_FILES = $(wildcard *.go)
-GO_PACKAGES = storage syslogish weblog
+GO_PACKAGES = storage logs weblog
 GO_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,$(GO_PACKAGES))
 GO_TESTABLE_PACKAGES_REPO_PATH = $(addprefix $(REPO_PATH)/,storage storage/file storage/ringbuffer)
 
@@ -50,21 +50,21 @@ bootstrap: check-docker
 build-binary:
 	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o $(BINARY_DEST_DIR)/logger main.go
 
-build: build-with-container docker-build
+build: docker-build
+build-without-container: build-binary build-image
+push: docker-push
+upgrade: kube-update
+install: kube-install
+uninstall: kube-delete
 
 # Containerized build of the binary
 build-with-container: check-docker
 	mkdir -p ${BINARY_DEST_DIR}
 	${DEV_ENV_CMD} make build-binary
-	docker build --rm -t ${IMAGE} rootfs
 
-build-without-container: build-binary
-	docker build -t ${IMAGE} rootfs
-	docker tag ${IMAGE} ${MUTABLE_IMAGE}
+docker-build: build-with-container build-image
 
-push: docker-push
-
-docker-build: build-with-container
+build-image:
 	docker build -t ${IMAGE} rootfs
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
@@ -96,17 +96,14 @@ test-unit:
 kube-install:
 	kubectl create -f manifests/deis-logger-svc.yaml
 	kubectl create -f manifests/deis-logger-rc.yaml
-	kubectl create -f manifests/deis-logger-fluentd-daemon.yaml
 
 kube-delete:
 	-kubectl delete -f manifests/deis-logger-svc.yaml
 	-kubectl delete -f manifests/deis-logger-rc.tmp.yaml
-	-kubectl delete -f manifests/deis-logger-fluentd-daemon.yaml
 
 kube-create: update-manifests
 	kubectl create -f manifests/deis-logger-svc.yaml
 	kubectl create -f manifests/deis-logger-rc.tmp.yaml
-	kubectl create -f manifests/deis-logger-fluentd-daemon.yaml
 
 kube-replace: build push update-manifests
 	kubectl replace --force -f manifests/deis-logger-rc.tmp.yaml

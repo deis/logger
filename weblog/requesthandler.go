@@ -7,26 +7,28 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/deis/logger/syslogish"
+	"github.com/deis/logger/logs"
 	"github.com/gorilla/mux"
 )
 
 type requestHandler struct {
-	syslogishServer *syslogish.Server
+	Logger *logs.Logger
 }
 
-func newRequestHandler(syslogishServer *syslogish.Server) *requestHandler {
-	return &requestHandler{syslogishServer: syslogishServer}
+func newRequestHandler(logger *logs.Logger) *requestHandler {
+	return &requestHandler{
+		Logger: logger,
+	}
 }
 
-func (h requestHandler) getHealthz(w http.ResponseWriter, r *http.Request) {
+func (h requestHandler) getHealthz(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	app := mux.Vars(r)["app"]
+func (h requestHandler) getLogs(w http.ResponseWriter, req *http.Request) {
+	app := mux.Vars(req)["app"]
 	var logLines int
-	logLinesStr := r.URL.Query().Get("log_lines")
+	logLinesStr := req.URL.Query().Get("log_lines")
 	if logLinesStr == "" {
 		log.Printf("The number of lines to return was not specified. Defaulting to 100 lines.")
 		logLines = 100
@@ -38,7 +40,7 @@ func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 			logLines = 100
 		}
 	}
-	logs, err := h.syslogishServer.ReadLogs(app, logLines)
+	logs, err := h.Logger.ReadLogs(app, logLines)
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "Could not find logs for") {
@@ -55,9 +57,9 @@ func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h requestHandler) deleteLogs(w http.ResponseWriter, r *http.Request) {
-	app := mux.Vars(r)["app"]
-	if err := h.syslogishServer.DestroyLogs(app); err != nil {
+func (h requestHandler) deleteLogs(w http.ResponseWriter, req *http.Request) {
+	app := mux.Vars(req)["app"]
+	if err := h.Logger.DestroyLogs(app); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}

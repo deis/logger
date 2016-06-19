@@ -18,12 +18,12 @@ spec:
       - name: deis-logger
         image: quay.io/deis/logger:v2-beta
         imagePullPolicy: Always
+        env:
+        - name: MAX_IN_FLIGHT
+          value: "100"
         ports:
         - containerPort: 8088
           name: http
-        - containerPort: 1514
-          name: transport
-          protocol: UDP
         livenessProbe:
           httpGet:
             path: /healthz
