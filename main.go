@@ -33,7 +33,7 @@ func main() {
 		log.Fatal("Error creating weblog server", err)
 	}
 
-	weblogServer.Listen()
+	serverErrCh := weblogServer.Listen()
 	log.Println("deis-logger running")
 
 	log.Printf("Listening to NSQ on %s", cfg.nsqURL())
@@ -54,10 +54,12 @@ func main() {
 	select {
 	case err := <-stoppedCh:
 		if err != nil {
-			log.Fatalf("NSQ consumer has stopped with error (%s)", err)
+			log.Fatalf("NSQ consumer has stopped (%s)", err)
 		} else {
 			log.Fatalf("NSQ consumer has stopped with no error")
 		}
+	case <-serverErrCh:
+		log.Fatalf("logs HTTP server failed (%s)", err)
 	case <-alwaysCh:
 	}
 }
