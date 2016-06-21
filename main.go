@@ -4,23 +4,19 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/deis/logger/syslogish"
 	"github.com/deis/logger/weblog"
 )
 
-var (
-	// TODO: When semver permits us to do so, many of these flags should probably be phased out in
-	// favor of just using environment variables.  Fewer avenues of configuring this component means
-	// less confusion.
-	storageType = getopt("STORAGE_ADAPTER", "memory")
-	numLines, _ = strconv.Atoi(getopt("NUMBER_OF_LINES", "1000"))
-)
-
 func main() {
-	syslogishServer, err := syslogish.NewServer(storageType, numLines)
+	cfg, err := parseConfig(appName)
+	if err != nil {
+		log.Fatalf("config error: %s", err)
+	}
+
+	syslogishServer, err := syslogish.NewServer(cfg.StorageType, cfg.NumLines)
 	if err != nil {
 		log.Fatal("Error creating syslogish server", err)
 	}
@@ -46,12 +42,4 @@ func main() {
 			log.Fatal("Error reopening logs", err)
 		}
 	}
-}
-
-func getopt(name, dfault string) string {
-	value := os.Getenv(name)
-	if value == "" {
-		value = dfault
-	}
-	return value
 }
