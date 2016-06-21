@@ -1,4 +1,4 @@
-package redis
+package storage
 
 import (
 	"fmt"
@@ -7,13 +7,13 @@ import (
 	r "gopkg.in/redis.v3"
 )
 
-type adapter struct {
+type redisAdapter struct {
 	bufferSize  int
 	redisClient *r.Client
 }
 
-// NewStorageAdapter returns a pointer to a new instance of a redis-based storage.Adapter.
-func NewStorageAdapter(bufferSize int) (*adapter, error) {
+// NewRedisStorageAdapter returns a pointer to a new instance of a redis-based storage.Adapter.
+func NewRedisStorageAdapter(bufferSize int) (*redisAdapter, error) {
 	if bufferSize <= 0 {
 		return nil, fmt.Errorf("Invalid buffer size: %d", bufferSize)
 	}
@@ -24,7 +24,7 @@ func NewStorageAdapter(bufferSize int) (*adapter, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &adapter{
+	return &redisAdapter{
 		bufferSize: bufferSize,
 		redisClient: r.NewClient(&r.Options{
 			Addr:     fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
@@ -35,7 +35,7 @@ func NewStorageAdapter(bufferSize int) (*adapter, error) {
 }
 
 // Write adds a log message to to an app-specific list in redis using ring-buffer-like semantics
-func (a *adapter) Write(app string, message string) error {
+func (a *redisAdapter) Write(app string, message string) error {
 	// Note: Deliberately NOT using MULTI / transactions here since in this implementation of the
 	// redis client, MULTI is not safe for concurrent use by multiple goroutines. It's been advised
 	// by the authors of the gopkg.in/redis.v3 package to just use pipelining when possible...
@@ -57,7 +57,7 @@ func (a *adapter) Write(app string, message string) error {
 }
 
 // Read retrieves a specified number of log lines from an app-specific list in redis
-func (a *adapter) Read(app string, lines int) ([]string, error) {
+func (a *redisAdapter) Read(app string, lines int) ([]string, error) {
 	stringSliceCmd := a.redisClient.LRange(app, int64(-1*lines), -1)
 	result, err := stringSliceCmd.Result()
 	if err != nil {
@@ -70,14 +70,14 @@ func (a *adapter) Read(app string, lines int) ([]string, error) {
 }
 
 // Destroy deletes an app-specific list from redis
-func (a *adapter) Destroy(app string) error {
+func (a *redisAdapter) Destroy(app string) error {
 	if err := a.redisClient.Del(app).Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *adapter) Reopen() error {
+func (a *redisAdapter) Reopen() error {
 	// No-op
 	return nil
 }

@@ -1,40 +1,48 @@
 package storage
 
 import (
-	"fmt"
-	"os"
 	"reflect"
 	"testing"
 )
 
-func TestGetUsingInvalidValues(t *testing.T) {
-	_, err := NewAdapter("bogus", 1)
-	if err == nil || err.Error() != fmt.Sprintf("Unrecognized storage adapter type: '%s'", "bogus") {
-		t.Error("Did not receive expected error message")
+const (
+	app = "test-app"
+)
+
+func TestFactoryGetUsingInvalidValues(t *testing.T) {
+	const adapterType = "bogus"
+	_, err := NewAdapter(adapterType, 1)
+	if err == nil {
+		t.Fatalf("Did not receive an error message")
+	}
+	unrecognizedErr, ok := err.(errUnrecognizedStorageAdapterType)
+	if !ok {
+		t.Fatalf("Expected an errUnrecognizedStorageAdapterType, received %s", err)
+	}
+	if unrecognizedErr.adapterType != adapterType {
+		t.Fatalf("Got an errUnrecognizedStorageAdapterType, but expected adapter type %s, got %s", adapterType, unrecognizedErr.adapterType)
 	}
 }
 
-func TestGetFileBasedAdapter(t *testing.T) {
+func TestFactoryGetFileBasedAdapter(t *testing.T) {
 	a, err := NewAdapter("file", 1)
 	if err != nil {
 		t.Error(err)
 	}
-	expected := "*file.adapter"
-	aType := reflect.TypeOf(a).String()
-	if aType != expected {
-		t.Errorf("Expected a %s, but got a %s", expected, aType)
+	retType, ok := a.(*fileAdapter)
+	if !ok {
+		t.Fatalf("Expected a *fileAdapter, got %s", reflect.TypeOf(retType).String())
 	}
 }
 
-func TestGetMemoryBasedAdapter(t *testing.T) {
+func TestFactoryGetMemoryBasedAdapter(t *testing.T) {
 	a, err := NewAdapter("memory", 1)
 	if err != nil {
 		t.Error(err)
 	}
-	expected := "*ringbuffer.adapter"
-	aType := reflect.TypeOf(a).String()
-	if aType != expected {
-		t.Errorf("Expected a %s, but got a %s", expected, aType)
+	retType, ok := a.(*ringBufferAdapter)
+	if !ok {
+		t.Fatalf("Expected a *ringBufferAdapter, got %s", reflect.TypeOf(retType).String())
 	}
 }
 
@@ -43,13 +51,8 @@ func TestGetRedisBasedAdapter(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	expected := "*redis.adapter"
-	aType := reflect.TypeOf(a).String()
-	if aType != expected {
-		t.Errorf("Expected a %s, but got a %s", expected, aType)
+	retType, ok := a.(*redisAdapter)
+	if !ok {
+		t.Errorf("Expected a redisAdapter, but got a %s", reflect.TypeOf(retType).String())
 	}
-}
-
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
 }

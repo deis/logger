@@ -1,4 +1,4 @@
-package file
+package storage
 
 import (
 	"fmt"
@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-const app string = "test-app"
-
 func TestReadFromNonExistingApp(t *testing.T) {
 	var err error
 	logRoot, err = ioutil.TempDir("", "log-tests")
@@ -18,7 +16,7 @@ func TestReadFromNonExistingApp(t *testing.T) {
 	}
 	defer os.Remove(logRoot)
 	// Initialize a new storage adapter
-	a, err := NewStorageAdapter()
+	a, err := NewFileAdapter()
 	if err != nil {
 		t.Error(err)
 	}
@@ -39,7 +37,7 @@ func TestLogs(t *testing.T) {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
-	a, err := NewStorageAdapter()
+	a, err := NewFileAdapter()
 	if err != nil {
 		t.Error(err)
 	}
@@ -65,7 +63,7 @@ func TestLogs(t *testing.T) {
 	}
 	// Should get the 3 MOST RECENT logs
 	if len(messages) != 3 {
-		t.Error("only expected 5 log messages, got %d", len(messages))
+		t.Errorf("only expected 5 log messages, got %d", len(messages))
 	}
 	for i := 0; i < 3; i++ {
 		expectedMessage := fmt.Sprintf("message %d", i+2)
@@ -82,10 +80,16 @@ func TestDestroy(t *testing.T) {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
-	a, err := NewStorageAdapter()
+	sa, err := NewFileAdapter()
 	if err != nil {
 		t.Error(err)
 	}
+
+	a, ok := sa.(*fileAdapter)
+	if !ok {
+		t.Fatalf("returned adapter was not a ringBuffer")
+	}
+
 	// Write a log to create the file
 	if err := a.Write(app, "Hello, log!"); err != nil {
 		t.Error(err)
@@ -116,9 +120,13 @@ func TestReopen(t *testing.T) {
 		t.Error(err)
 	}
 	defer os.Remove(logRoot)
-	a, err := NewStorageAdapter()
+	sa, err := NewFileAdapter()
 	if err != nil {
 		t.Error(err)
+	}
+	a, ok := sa.(*fileAdapter)
+	if !ok {
+		t.Fatalf("returned adapter was not a ringBuffer")
 	}
 	// Write a log to create the file
 	if err := a.Write(app, "Hello, log!"); err != nil {

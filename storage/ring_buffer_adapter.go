@@ -1,4 +1,4 @@
-package ringbuffer
+package storage
 
 import (
 	"container/ring"
@@ -49,22 +49,22 @@ func (rb *ringBuffer) read(lines int) []string {
 	return data
 }
 
-type adapter struct {
+type ringBufferAdapter struct {
 	bufferSize  int
 	ringBuffers map[string]*ringBuffer
 	mutex       sync.Mutex
 }
 
-// NewStorageAdapter returns a pointer to a new instance of an in-memory storage.Adapter.
-func NewStorageAdapter(bufferSize int) (*adapter, error) {
+// NewRingBufferAdapter returns a storage adapter that uses an in-memory ring buffer of the given size.
+func NewRingBufferAdapter(bufferSize int) (Adapter, error) {
 	if bufferSize <= 0 {
 		return nil, fmt.Errorf("Invalid ringBuffer size: %d", bufferSize)
 	}
-	return &adapter{bufferSize: bufferSize, ringBuffers: make(map[string]*ringBuffer)}, nil
+	return &ringBufferAdapter{bufferSize: bufferSize, ringBuffers: make(map[string]*ringBuffer)}, nil
 }
 
 // Write adds a log message to to an app-specific ringBuffer
-func (a *adapter) Write(app string, message string) error {
+func (a *ringBufferAdapter) Write(app string, message string) error {
 	// Check first if we might actually have to add to the map of ringBuffer pointers so we can avoid
 	// waiting for / obtaining a lock unnecessarily
 	a.mutex.Lock()
@@ -85,7 +85,7 @@ func (a *adapter) Write(app string, message string) error {
 }
 
 // Read retrieves a specified number of log lines from an app-specific ringBuffer
-func (a *adapter) Read(app string, lines int) ([]string, error) {
+func (a *ringBufferAdapter) Read(app string, lines int) ([]string, error) {
 	rb, ok := a.ringBuffers[app]
 	if ok {
 		data := rb.read(lines)
@@ -98,7 +98,7 @@ func (a *adapter) Read(app string, lines int) ([]string, error) {
 }
 
 // Destroy deletes stored logs for the specified application
-func (a *adapter) Destroy(app string) error {
+func (a *ringBufferAdapter) Destroy(app string) error {
 	// Check first if the map of ringBuffer pointers even contains the ringBuffer we intend to
 	// delete so we can avoid waiting for / obtaining a lock unnecessarily
 	_, ok := a.ringBuffers[app]
@@ -110,7 +110,7 @@ func (a *adapter) Destroy(app string) error {
 	return nil
 }
 
-func (a *adapter) Reopen() error {
+func (a *ringBufferAdapter) Reopen() error {
 	// No-op
 	return nil
 }
