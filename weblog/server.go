@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/deis/logger/syslogish"
+	"github.com/deis/logger/logs"
 	"github.com/gorilla/mux"
 )
 
@@ -20,28 +20,31 @@ const (
 type Server struct {
 	listening bool
 	router    *mux.Router
+	errCh     chan error
 }
 
 // NewServer returns a pointer to a new Server instance.
-func NewServer(syslogishServer *syslogish.Server) (*Server, error) {
+func NewServer(logger *logs.Logger) (*Server, error) {
 	return &Server{
-		router: newRouter(newRequestHandler(syslogishServer)),
+		router: newRouter(newRequestHandler(logger)),
 	}, nil
 }
 
 // Listen starts the server's main loop.
-func (s *Server) Listen() {
+func (s *Server) Listen() <-chan error {
 	// Should only ever be called once
 	if !s.listening {
 		s.listening = true
-		go s.listen()
+		go func() {
+			s.errCh <- s.listen()
+		}()
 		log.Printf("weblog server running on %s:%d", bindHost, bindPort)
 	}
+	return s.errCh
 }
 
-func (s *Server) listen() {
-	http.Handle("/", s.router)
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", bindHost, bindPort), nil); err != nil {
-		log.Fatal("weblog server stopped", err)
-	}
+func (s *Server) listen() error {
+	mux := http.NewServeMux()
+	mux.Handle("/", s.router)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", bindHost, bindPort), mux)
 }
