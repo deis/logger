@@ -1,45 +1,51 @@
 package main
 
 import (
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
+	l "log"
 
-	"github.com/deis/logger/syslogish"
+	"github.com/deis/logger/log"
+	"github.com/deis/logger/storage"
 	"github.com/deis/logger/weblog"
 )
 
 func main() {
 	cfg, err := parseConfig(appName)
 	if err != nil {
-		log.Fatalf("config error: %s", err)
+		l.Fatalf("config error: %s: ", err)
 	}
 
-	syslogishServer, err := syslogish.NewServer(cfg.StorageType, cfg.NumLines)
+	storageAdapter, err := storage.NewAdapter(cfg.StorageType, cfg.NumLines)
 	if err != nil {
-		log.Fatal("Error creating syslogish server", err)
+		l.Fatal("Error creating storage adapter: ", err)
 	}
-	weblogServer, err := weblog.NewServer(syslogishServer)
+
+	aggregator, err := log.NewAggregator(cfg.AggregatorType, storageAdapter)
 	if err != nil {
-		log.Fatal("Error creating weblog server", err)
+		l.Fatal("Error creating log aggregator: ", err)
 	}
+	err = aggregator.Listen()
+	if err != nil {
+		l.Fatal("Error starting log aggregator: ", err)
+	}
+	l.Println("Log aggregator running")
 
-	syslogishServer.Listen()
-	weblogServer.Listen()
+	weblogServer, err := weblog.NewServer(storageAdapter)
+	if err != nil {
+		l.Fatal("Error creating weblog server: ", err)
+	}
+	serverErrCh := weblogServer.Listen()
+	l.Println("Weblog server running")
 
-	log.Println("deis-logger running")
-
-	// No cleanup is needed upon termination.  The signal to reopen log files (after hypothetical
-	// logroation, for instance), if applicable, is the only signal we'll care about.  Our main loop
-	// will just wait for that signal.
-	reopen := make(chan os.Signal, 1)
-	signal.Notify(reopen, syscall.SIGUSR1)
-
-	for {
-		<-reopen
-		if err := syslogishServer.ReopenLogs(); err != nil {
-			log.Fatal("Error reopening logs", err)
+	defer aggregator.Stop()
+	stoppedCh := aggregator.Stopped()
+	select {
+	case stopErr := <-stoppedCh:
+		if err != nil {
+			l.Fatal("Log aggregator has stopped: ", stopErr)
+		} else {
+			l.Fatal("Log aggregator has stopped with no error")
 		}
+	case serverErr := <-serverErrCh:
+		l.Fatal("Weblog server failed: ", serverErr)
 	}
 }

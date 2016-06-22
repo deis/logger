@@ -9,8 +9,9 @@ const (
 )
 
 type config struct {
-	StorageType string `envconfig:"STORAGE_ADAPTER" default:"memory"`
-	NumLines    int    `envconfig:"NUMBER_OF_LINES" default:"1000"`
+	StorageType    string `envconfig:"STORAGE_ADAPTER" default:"memory"`
+	NumLines       int    `envconfig:"NUMBER_OF_LINES" default:"1000"`
+	AggregatorType string `envconfig:"AGGREGATOR_TYPE" default:"nsq"`
 }
 
 func parseConfig(appName string) (*config, error) {
