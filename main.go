@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"github.com/deis/logger/consumer"
@@ -72,12 +71,4 @@ func nsqMsgHandler(logger *logs.Logger) consumer.MessageHandler {
 		}
 		return nil
 	})
-}
-
-func getopt(name, dfault string) string {
-	value := os.Getenv(name)
-	if value == "" {
-		value = dfault
-	}
-	return value
 }
