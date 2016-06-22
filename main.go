@@ -52,14 +52,14 @@ func main() {
 	alwaysCh := make(chan struct{})
 	stoppedCh := consumer.Stopped()
 	select {
-	case err := <-stoppedCh:
+	case stopErr := <-stoppedCh:
 		if err != nil {
-			log.Fatalf("NSQ consumer has stopped (%s)", err)
+			log.Fatalf("NSQ consumer has stopped (%s)", stopErr)
 		} else {
 			log.Fatalf("NSQ consumer has stopped with no error")
 		}
-	case <-serverErrCh:
-		log.Fatalf("logs HTTP server failed (%s)", err)
+	case serverErr := <-serverErrCh:
+		log.Fatalf("logs HTTP server failed (%s)", serverErr)
 	case <-alwaysCh:
 	}
 }
