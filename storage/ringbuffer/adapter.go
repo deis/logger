@@ -88,9 +88,13 @@ func (a *adapter) Write(app string, message string) error {
 func (a *adapter) Read(app string, lines int) ([]string, error) {
 	rb, ok := a.ringBuffers[app]
 	if ok {
-		return rb.read(lines), nil
+		data := rb.read(lines)
+		if len(data) == 0 {
+			return nil, fmt.Errorf("Could not find logs for '%s'. Ringbuffer existed for '%s', but returned no logs.", app, app)
+		}
+		return data, nil
 	}
-	return nil, fmt.Errorf("Could not find logs for '%s'", app)
+	return nil, fmt.Errorf("Could not find logs for '%s'. No ringbuffer existed for '%s'.", app, app)
 }
 
 // Destroy deletes stored logs for the specified application
