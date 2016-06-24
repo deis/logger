@@ -1,10 +1,20 @@
-hash: 6f9906fa7ad40dff07ca13de5a696fa8a010ecb3bece2dc4a528eb994a45baf9
-updated: 2016-06-21T13:14:44.921222388-07:00
+hash: 2e289330bc87345e9bd848b72552b65f7828a3cdc404f374bb8642abeddf3aad
+updated: 2016-06-22T16:00:53.76132532Z
 imports:
+- name: github.com/deis/logger
+  version: 3bf21b87c7e6ac521ab3eb05904dd147be4bfd8a
+  subpackages:
+  - osutils
 - name: github.com/gorilla/context
-  version: 1c83b3eabd45b6d76072b66b746c20815fb2872d
+  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/gorilla/mux
-  version: 26a6070f849969ba72b72256e9f14cf519751690
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
+- name: github.com/mreiferson/go-snappystream
+  version: 028eae7ab5c4c9e2d1cb4c4ca1e53259bbe7e504
+  subpackages:
+  - snappy-go
+- name: github.com/nsqio/go-nsq
+  version: d71fb89c9e0263aaed89645b0b168e11ccf597b1
 devImports: []

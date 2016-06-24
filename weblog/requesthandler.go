@@ -7,16 +7,19 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/deis/logger/syslogish"
 	"github.com/gorilla/mux"
+
+	"github.com/deis/logger/storage"
 )
 
 type requestHandler struct {
-	syslogishServer *syslogish.Server
+	storageAdapter storage.Adapter
 }
 
-func newRequestHandler(syslogishServer *syslogish.Server) *requestHandler {
-	return &requestHandler{syslogishServer: syslogishServer}
+func newRequestHandler(storageAdapter storage.Adapter) *requestHandler {
+	return &requestHandler{
+		storageAdapter: storageAdapter,
+	}
 }
 
 func (h requestHandler) getHealthz(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +41,7 @@ func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 			logLines = 100
 		}
 	}
-	logs, err := h.syslogishServer.ReadLogs(app, logLines)
+	logs, err := h.storageAdapter.Read(app, logLines)
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "Could not find logs for") {
@@ -57,7 +60,7 @@ func (h requestHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 
 func (h requestHandler) deleteLogs(w http.ResponseWriter, r *http.Request) {
 	app := mux.Vars(r)["app"]
-	if err := h.syslogishServer.DestroyLogs(app); err != nil {
+	if err := h.storageAdapter.Destroy(app); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
