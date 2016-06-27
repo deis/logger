@@ -18,7 +18,7 @@ func TestReadFromNonExistingApp(t *testing.T) {
 	if messages != nil {
 		t.Error("Expected no messages, but got some")
 	}
-	if err == nil || err.Error() != fmt.Sprintf("Could not find logs for '%s'", app) {
+	if err == nil || err.Error() != fmt.Sprintf("Could not find logs for '%s'. No ringbuffer existed for '%s'.", app, app) {
 		t.Error("Did not receive expected error message")
 	}
 }
