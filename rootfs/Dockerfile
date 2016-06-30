@@ -17,5 +17,3 @@ USER logger
 
 CMD ["/opt/logger/sbin/logger"]
 EXPOSE 1514 8088
-
-ENV WORKFLOW_RELEASE 2.0.0
