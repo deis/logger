@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/deis/logger/storage/file"
+	"github.com/deis/logger/storage/redis"
 	"github.com/deis/logger/storage/ringbuffer"
 )
 
@@ -18,6 +19,13 @@ func NewAdapter(storeageAdapterType string, numLines int) (Adapter, error) {
 	}
 	if storeageAdapterType == "memory" {
 		adapter, err := ringbuffer.NewStorageAdapter(numLines)
+		if err != nil {
+			return nil, err
+		}
+		return adapter, nil
+	}
+	if storeageAdapterType == "redis" {
+		adapter, err := redis.NewStorageAdapter(numLines)
 		if err != nil {
 			return nil, err
 		}

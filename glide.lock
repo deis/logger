@@ -1,10 +1,6 @@
-hash: 2e289330bc87345e9bd848b72552b65f7828a3cdc404f374bb8642abeddf3aad
-updated: 2016-06-22T16:00:53.76132532Z
+hash: 03d367b59b94b85b1eeb7acec7a679364921474ccc607e8d36a6558d94af5369
+updated: 2016-06-24T22:33:20.466933554Z
 imports:
-- name: github.com/deis/logger
-  version: 3bf21b87c7e6ac521ab3eb05904dd147be4bfd8a
-  subpackages:
-  - osutils
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/gorilla/mux
@@ -17,4 +13,13 @@ imports:
   - snappy-go
 - name: github.com/nsqio/go-nsq
   version: d71fb89c9e0263aaed89645b0b168e11ccf597b1
+- name: gopkg.in/bsm/ratelimit.v1
+  version: db14e161995a5177acef654cb0dd785e8ee8bc22
+- name: gopkg.in/redis.v3
+  version: a905127dc89ca51a241eacf70757a40423ab93d0
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
 devImports: []
