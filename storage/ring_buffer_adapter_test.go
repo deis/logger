@@ -1,44 +1,46 @@
-package redis
+package storage
 
 import (
 	"fmt"
 	"testing"
 )
 
-const app string = "test-app"
-
-func TestReadFromNonExistingApp(t *testing.T) {
+func TestRingBufferReadFromNonExistingApp(t *testing.T) {
 	// Initialize a new storage adapter
-	a, err := NewStorageAdapter(10)
+	sa, err := NewRingBufferAdapter(10)
 	if err != nil {
 		t.Error(err)
 	}
-	// No logs have been written; there should be no redis list for app
+	a, ok := sa.(*ringBufferAdapter)
+	if !ok {
+		t.Fatalf("returned adapter was not a ringBuffer")
+	}
+	// No logs have been writter; there should be no ringBuffer for app
 	messages, err := a.Read(app, 10)
 	if messages != nil {
 		t.Error("Expected no messages, but got some")
 	}
-	if err == nil || err.Error() != fmt.Sprintf("Could not find logs for '%s'", app) {
+	if err == nil || err.Error() != fmt.Sprintf("Could not find logs for '%s'. No ringbuffer existed for '%s'.", app, app) {
 		t.Error("Did not receive expected error message")
 	}
 }
 
-func TestWithBadBufferSizes(t *testing.T) {
+func TestRingBufferWithBadBufferSizes(t *testing.T) {
 	// Initialize with invalid buffer sizes
 	for _, size := range []int{-1, 0} {
-		a, err := NewStorageAdapter(size)
+		a, err := NewRingBufferAdapter(size)
 		if a != nil {
 			t.Error("Expected no storage adapter, but got one")
 		}
-		if err == nil || err.Error() != fmt.Sprintf("Invalid buffer size: %d", size) {
+		if err == nil || err.Error() != fmt.Sprintf("Invalid ringBuffer size: %d", size) {
 			t.Error("Did not receive expected error message")
 		}
 	}
 }
 
-func TestLogs(t *testing.T) {
+func TestRingBufferLogs(t *testing.T) {
 	// Initialize with small buffers
-	a, err := NewStorageAdapter(10)
+	a, err := NewRingBufferAdapter(10)
 	if err != nil {
 		t.Error(err)
 	}
@@ -96,33 +98,30 @@ func TestLogs(t *testing.T) {
 	}
 }
 
-func TestDestroy(t *testing.T) {
-	a, err := NewStorageAdapter(10)
+func TestRingBufferDestroy(t *testing.T) {
+	sa, err := NewRingBufferAdapter(10)
 	if err != nil {
 		t.Error(err)
+	}
+
+	a, ok := sa.(*ringBufferAdapter)
+	if !ok {
+		t.Fatalf("returned adapter was not a ringBuffer")
 	}
 	// Write a log to create the file
 	if err := a.Write(app, "Hello, log!"); err != nil {
 		t.Error(err)
 	}
-	// A redis list should exist for the app
-	exists, err := a.redisClient.Exists(app).Result()
-	if err != nil {
-		t.Error(err)
-	}
-	if !exists {
-		t.Error("Log redis list was expected to exist, but doesn't.")
+	// A ringBuffer should exist for the app
+	if _, ok := a.ringBuffers[app]; !ok {
+		t.Error("Log ringbuffer was expected to exist, but doesn't.")
 	}
 	// Now destroy it
 	if err := a.Destroy(app); err != nil {
 		t.Error(err)
 	}
-	// Now check that the redis list no longer exists
-	exists, err = a.redisClient.Exists(app).Result()
-	if err != nil {
-		t.Error(err)
-	}
-	if exists {
-		t.Error("Log redis list still exist, but was expected not to.")
+	// Now check that the ringBuffer no longer exists
+	if _, ok := a.ringBuffers[app]; ok {
+		t.Error("Log ringbuffer still exist, but was expected not to.")
 	}
 }

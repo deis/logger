@@ -17,7 +17,7 @@ type Message struct {
 	Docker     Docker     `json:"docker"`
 }
 
-// Kuberentes specific log message fields
+// Kubernetes specific log message fields
 type Kubernetes struct {
 	Namespace     string            `json:"namespace_name"`
 	PodID         string            `json:"pod_id"`

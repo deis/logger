@@ -96,7 +96,11 @@ style-check:
 	$(GOFMT) $(GO_PACKAGES) $(GO_FILES)
 	@$(GOFMT) $(GO_PACKAGES) $(GO_FILES) | read; if [ $$? == 0 ]; then echo "gofmt check failed."; exit 1; fi
 	$(GOVET) $(REPO_PATH) $(GO_PACKAGES_REPO_PATH)
-	$(GOLINT) ./...
+	$(GOLINT) ./log
+	$(GOLINT) ./storage
+	$(GOLINT) ./tests
+	$(GOLINT) ./weblog
+	$(GOLINT) .
 	shellcheck $(SHELL_SCRIPTS)
 
 start-test-redis:
@@ -112,7 +116,7 @@ test-unit: start-test-redis
 		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
 		${DEV_ENV_IMAGE} bash -c 'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
 		DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
-		$(GOTEST) $$(glide nv)' \
+		$(GOTEST) -tags="testredis" $$(glide nv)' \
 		|| (make stop-test-redis && false)
 	make stop-test-redis
 

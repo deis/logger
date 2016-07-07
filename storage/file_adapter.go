@@ -1,4 +1,4 @@
-package file
+package storage
 
 import (
 	"fmt"
@@ -12,18 +12,18 @@ import (
 
 var logRoot = "/data/logs"
 
-type adapter struct {
+type fileAdapter struct {
 	files map[string]*os.File
 	mutex sync.Mutex
 }
 
-// NewStorageAdapter returns a pointer to a new instance of a file-based storage.Adapter.
-func NewStorageAdapter() (*adapter, error) {
-	return &adapter{files: make(map[string]*os.File)}, nil
+// NewFileAdapter returns an Adapter that uses a file.
+func NewFileAdapter() (Adapter, error) {
+	return &fileAdapter{files: make(map[string]*os.File)}, nil
 }
 
 // Write adds a log message to to an app-specific log file
-func (a *adapter) Write(app string, message string) error {
+func (a *fileAdapter) Write(app string, message string) error {
 	// Check first if we might actually have to add to the map of file pointers so we can avoid
 	// waiting for / obtaining a lock unnecessarily
 	f, ok := a.files[app]
@@ -49,7 +49,7 @@ func (a *adapter) Write(app string, message string) error {
 }
 
 // Read retrieves a specified number of log lines from an app-specific log file
-func (a *adapter) Read(app string, lines int) ([]string, error) {
+func (a *fileAdapter) Read(app string, lines int) ([]string, error) {
 	if lines <= 0 {
 		return []string{}, nil
 	}
@@ -70,7 +70,7 @@ func (a *adapter) Read(app string, lines int) ([]string, error) {
 }
 
 // Destroy deletes stored logs for the specified application
-func (a *adapter) Destroy(app string) error {
+func (a *fileAdapter) Destroy(app string) error {
 	// Check first if the map of file pointers even contains the file pointer we want so we can avoid
 	// waiting for / obtaining a lock unnecessarily
 	f, ok := a.files[app]
@@ -93,7 +93,7 @@ func (a *adapter) Destroy(app string) error {
 	return nil
 }
 
-func (a *adapter) Reopen() error {
+func (a *fileAdapter) Reopen() error {
 	// Ensure no other goroutine is trying to add a file pointer to the map of file pointers while
 	// we're trying to clear it out
 	a.mutex.Lock()
@@ -102,7 +102,7 @@ func (a *adapter) Reopen() error {
 	return nil
 }
 
-func (a *adapter) getFile(app string) (*os.File, error) {
+func (a *fileAdapter) getFile(app string) (*os.File, error) {
 	filePath := a.getFilePath(app)
 	exists, err := fileExists(filePath)
 	if err != nil {
@@ -118,7 +118,7 @@ func (a *adapter) getFile(app string) (*os.File, error) {
 	return file, err
 }
 
-func (a *adapter) getFilePath(app string) string {
+func (a *fileAdapter) getFilePath(app string) string {
 	return path.Join(logRoot, app+".log")
 }
 

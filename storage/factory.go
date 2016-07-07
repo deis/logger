@@ -2,34 +2,39 @@ package storage
 
 import (
 	"fmt"
-	"github.com/deis/logger/storage/file"
-	"github.com/deis/logger/storage/redis"
-	"github.com/deis/logger/storage/ringbuffer"
 )
 
+type errUnrecognizedStorageAdapterType struct {
+	adapterType string
+}
+
+func (e errUnrecognizedStorageAdapterType) Error() string {
+	return fmt.Sprintf("Unrecognized storage adapter type: %s", e.adapterType)
+}
+
 // NewAdapter returns a pointer to an appropriate implementation of the Adapter interface, as
-// determined by the storeageAdapterType string it is passed.
-func NewAdapter(storeageAdapterType string, numLines int) (Adapter, error) {
-	if storeageAdapterType == "file" {
-		adapter, err := file.NewStorageAdapter()
+// determined by the adapterType string it is passed.
+func NewAdapter(adapterType string, numLines int) (Adapter, error) {
+	if adapterType == "file" {
+		adapter, err := NewFileAdapter()
 		if err != nil {
 			return nil, err
 		}
 		return adapter, nil
 	}
-	if storeageAdapterType == "memory" {
-		adapter, err := ringbuffer.NewStorageAdapter(numLines)
+	if adapterType == "memory" {
+		adapter, err := NewRingBufferAdapter(numLines)
 		if err != nil {
 			return nil, err
 		}
 		return adapter, nil
 	}
-	if storeageAdapterType == "redis" {
-		adapter, err := redis.NewStorageAdapter(numLines)
+	if adapterType == "redis" {
+		adapter, err := NewRedisStorageAdapter(numLines)
 		if err != nil {
 			return nil, err
 		}
 		return adapter, nil
 	}
-	return nil, fmt.Errorf("Unrecognized storage adapter type: '%s'", storeageAdapterType)
+	return nil, errUnrecognizedStorageAdapterType{adapterType: adapterType}
 }
