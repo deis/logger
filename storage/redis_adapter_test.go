@@ -1,3 +1,5 @@
+// +build testredis
+
 package storage
 
 import (

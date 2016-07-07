@@ -113,7 +113,7 @@ test-unit: start-test-redis
 		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
 		${DEV_ENV_IMAGE} bash -c 'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
 		DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
-		$(GOTEST) $$(glide nv)' \
+		$(GOTEST) -tags="testredis" $$(glide nv)' \
 		|| (make stop-test-redis && false)
 	make stop-test-redis
 
