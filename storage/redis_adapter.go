@@ -3,13 +3,71 @@ package storage
 import (
 	"fmt"
 	"log"
+	"time"
 
 	r "gopkg.in/redis.v3"
 )
 
+type message struct {
+	app         string
+	messageBody string
+}
+
+func newMessage(app string, messageBody string) *message {
+	return &message{
+		app:         app,
+		messageBody: messageBody,
+	}
+}
+
+type messagePipeliner struct {
+	bufferSize    int
+	messageCount  int
+	pipeline      *r.Pipeline
+	timeoutTicker *time.Ticker
+	queuedApps    map[string]bool
+	errCh         chan error
+}
+
+func newMessagePipeliner(bufferSize int, redisClient *r.Client, errCh chan error) *messagePipeliner {
+	return &messagePipeliner{
+		bufferSize:    bufferSize,
+		pipeline:      redisClient.Pipeline(),
+		timeoutTicker: time.NewTicker(time.Second),
+		queuedApps:    map[string]bool{},
+		errCh:         errCh,
+	}
+}
+
+func (mp *messagePipeliner) addMessage(message *message) {
+	if err := mp.pipeline.RPush(message.app, message.messageBody).Err(); err == nil {
+		mp.queuedApps[message.app] = true
+		mp.messageCount++
+	} else {
+		mp.errCh <- fmt.Errorf("Error adding rpush to %s to the pipeline: %s", message.app, err)
+	}
+}
+
+func (mp messagePipeliner) execPipeline() {
+	for app := range mp.queuedApps {
+		if err := mp.pipeline.LTrim(app, int64(-1*mp.bufferSize), -1).Err(); err != nil {
+			mp.errCh <- fmt.Errorf("Error adding ltrim of %s to the pipeline: %s", app, err)
+		}
+	}
+	go func() {
+		defer mp.pipeline.Close()
+		if _, err := mp.pipeline.Exec(); err != nil {
+			mp.errCh <- fmt.Errorf("Error executing pipeline: %s", err)
+		}
+	}()
+}
+
 type redisAdapter struct {
-	bufferSize  int
-	redisClient *r.Client
+	started        bool
+	bufferSize     int
+	redisClient    *r.Client
+	messageChannel chan *message
+	stopCh         chan struct{}
 }
 
 // NewRedisStorageAdapter returns a pointer to a new instance of a redis-based storage.Adapter.
@@ -24,35 +82,59 @@ func NewRedisStorageAdapter(bufferSize int) (*redisAdapter, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &redisAdapter{
+	rsa := &redisAdapter{
 		bufferSize: bufferSize,
 		redisClient: r.NewClient(&r.Options{
 			Addr:     fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
 			Password: cfg.RedisPassword, // "" == no password
 			DB:       int64(cfg.RedisDB),
 		}),
-	}, nil
+		messageChannel: make(chan *message),
+		stopCh:         make(chan struct{}),
+	}
+	return rsa, nil
+}
+
+// Start the storage adapter. Invocations of this function are not concurrency safe and multiple
+// serialized invocations have no effect.
+func (a *redisAdapter) Start() {
+	if !a.started {
+		a.started = true
+		errCh := make(chan error)
+		mp := newMessagePipeliner(a.bufferSize, a.redisClient, errCh)
+		go func() {
+			for {
+				select {
+				case err := <-errCh:
+					log.Println(err)
+				case <-a.stopCh:
+					return
+				}
+			}
+		}()
+		go func() {
+			for {
+				select {
+				case message := <-a.messageChannel:
+					mp.addMessage(message)
+					if mp.messageCount == 50 {
+						mp.execPipeline()
+						mp = newMessagePipeliner(a.bufferSize, a.redisClient, errCh)
+					}
+				case <-mp.timeoutTicker.C:
+					mp.execPipeline()
+					mp = newMessagePipeliner(a.bufferSize, a.redisClient, errCh)
+				case <-a.stopCh:
+					return
+				}
+			}
+		}()
+	}
 }
 
 // Write adds a log message to to an app-specific list in redis using ring-buffer-like semantics
-func (a *redisAdapter) Write(app string, message string) error {
-	// Note: Deliberately NOT using MULTI / transactions here since in this implementation of the
-	// redis client, MULTI is not safe for concurrent use by multiple goroutines. It's been advised
-	// by the authors of the gopkg.in/redis.v3 package to just use pipelining when possible...
-	// and here that is technically possible. In the WORST case scenario, not having transactions
-	// means we may momentarily have more than the desired number of log entries in the list /
-	// buffer, but an LTRIM will eventually correct that, bringing the list / buffer back down to
-	// its desired max size.
-	pipeline := a.redisClient.Pipeline()
-	if err := pipeline.RPush(app, message).Err(); err != nil {
-		return err
-	}
-	if err := pipeline.LTrim(app, int64(-1*a.bufferSize), -1).Err(); err != nil {
-		return err
-	}
-	if _, err := pipeline.Exec(); err != nil {
-		return err
-	}
+func (a *redisAdapter) Write(app string, messageBody string) error {
+	a.messageChannel <- newMessage(app, messageBody)
 	return nil
 }
 
@@ -77,7 +159,12 @@ func (a *redisAdapter) Destroy(app string) error {
 	return nil
 }
 
+// Reopen the storage adapter-- in the case of this implementation, a no-op
 func (a *redisAdapter) Reopen() error {
-	// No-op
 	return nil
+}
+
+// Stop the storage adapter. Additional writes may not be performed after stopping.
+func (a *redisAdapter) Stop() {
+	close(a.stopCh)
 }

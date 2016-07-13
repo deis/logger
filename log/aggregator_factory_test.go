@@ -9,6 +9,9 @@ import (
 type stubStorageAdapter struct {
 }
 
+func (a *stubStorageAdapter) Start() {
+}
+
 func (a *stubStorageAdapter) Write(app string, message string) error {
 	return nil
 }
@@ -23,6 +26,9 @@ func (a *stubStorageAdapter) Destroy(app string) error {
 
 func (a *stubStorageAdapter) Reopen() error {
 	return nil
+}
+
+func (a *stubStorageAdapter) Stop() {
 }
 
 func TestGetUsingInvalidValues(t *testing.T) {
