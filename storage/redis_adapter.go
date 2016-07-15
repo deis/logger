@@ -71,7 +71,7 @@ type redisAdapter struct {
 }
 
 // NewRedisStorageAdapter returns a pointer to a new instance of a redis-based storage.Adapter.
-func NewRedisStorageAdapter(bufferSize int) (*redisAdapter, error) {
+func NewRedisStorageAdapter(bufferSize int) (Adapter, error) {
 	if bufferSize <= 0 {
 		return nil, fmt.Errorf("Invalid buffer size: %d", bufferSize)
 	}

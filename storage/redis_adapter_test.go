@@ -120,7 +120,7 @@ func TestRedisDestroy(t *testing.T) {
 	// there are 50 queued up OR a 1 second timeout has been reached.
 	time.Sleep(time.Second * 2)
 	// A redis list should exist for the app
-	exists, err := a.redisClient.Exists(app).Result()
+	exists, err := a.(*redisAdapter).redisClient.Exists(app).Result()
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,7 +132,7 @@ func TestRedisDestroy(t *testing.T) {
 		t.Error(err)
 	}
 	// Now check that the redis list no longer exists
-	exists, err = a.redisClient.Exists(app).Result()
+	exists, err = a.(*redisAdapter).redisClient.Exists(app).Result()
 	if err != nil {
 		t.Error(err)
 	}
