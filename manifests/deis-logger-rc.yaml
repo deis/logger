@@ -19,8 +19,13 @@ spec:
         image: quay.io/deis/logger:v2-beta
         imagePullPolicy: Always
         env:
-        - name: NSQ_HANDLER_COUNT
-          value: "100"
+        - name: STORAGE_ADAPTER
+          value: redis
+        - name: DEIS_LOGGER_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logger-redis-creds
+              key: password
         ports:
         - containerPort: 8088
           name: http
