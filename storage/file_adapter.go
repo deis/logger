@@ -22,6 +22,10 @@ func NewFileAdapter() (Adapter, error) {
 	return &fileAdapter{files: make(map[string]*os.File)}, nil
 }
 
+// Start the storage adapter-- in the case of this implementation, a no-op
+func (a *fileAdapter) Start() {
+}
+
 // Write adds a log message to to an app-specific log file
 func (a *fileAdapter) Write(app string, message string) error {
 	// Check first if we might actually have to add to the map of file pointers so we can avoid
@@ -93,6 +97,7 @@ func (a *fileAdapter) Destroy(app string) error {
 	return nil
 }
 
+// Reopen every file referenced by this storage adapter
 func (a *fileAdapter) Reopen() error {
 	// Ensure no other goroutine is trying to add a file pointer to the map of file pointers while
 	// we're trying to clear it out
@@ -100,6 +105,10 @@ func (a *fileAdapter) Reopen() error {
 	defer a.mutex.Unlock()
 	a.files = make(map[string]*os.File)
 	return nil
+}
+
+// Stop the storage adapter-- in the case of this implementation, a no-op
+func (a *fileAdapter) Stop() {
 }
 
 func (a *fileAdapter) getFile(app string) (*os.File, error) {

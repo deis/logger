@@ -63,6 +63,10 @@ func NewRingBufferAdapter(bufferSize int) (Adapter, error) {
 	return &ringBufferAdapter{bufferSize: bufferSize, ringBuffers: make(map[string]*ringBuffer)}, nil
 }
 
+// Start the storage adapter-- in the case of this implementation, a no-op
+func (a *ringBufferAdapter) Start() {
+}
+
 // Write adds a log message to to an app-specific ringBuffer
 func (a *ringBufferAdapter) Write(app string, message string) error {
 	// Check first if we might actually have to add to the map of ringBuffer pointers so we can avoid
@@ -110,7 +114,11 @@ func (a *ringBufferAdapter) Destroy(app string) error {
 	return nil
 }
 
+// Reopen the storage adapter-- in the case of this implementation, a no-op
 func (a *ringBufferAdapter) Reopen() error {
-	// No-op
 	return nil
+}
+
+// Stop the storage adapter-- in the case of this implementation, a no-op
+func (a *ringBufferAdapter) Stop() {
 }

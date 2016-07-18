@@ -9,7 +9,7 @@ const (
 )
 
 type config struct {
-	StorageType    string `envconfig:"STORAGE_ADAPTER" default:"memory"`
+	StorageType    string `envconfig:"STORAGE_ADAPTER" default:"redis"`
 	NumLines       int    `envconfig:"NUMBER_OF_LINES" default:"1000"`
 	AggregatorType string `envconfig:"AGGREGATOR_TYPE" default:"nsq"`
 }

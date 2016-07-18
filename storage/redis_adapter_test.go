@@ -5,6 +5,7 @@ package storage
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestRedisReadFromNonExistingApp(t *testing.T) {
@@ -42,12 +43,17 @@ func TestRedisLogs(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	a.Start()
+	defer a.Stop()
 	// And write a few logs to it, but do NOT fill it up
 	for i := 0; i < 5; i++ {
 		if err := a.Write(app, fmt.Sprintf("message %d", i)); err != nil {
 			t.Error(err)
 		}
 	}
+	// Sleep for a bit because the adapter queues logs internally and writes them to Redis only when
+	// there are 50 queued up OR a 1 second timeout has been reached.
+	time.Sleep(time.Second * 2)
 	// Read more logs than there are
 	messages, err := a.Read(app, 8)
 	if err != nil {
@@ -78,6 +84,9 @@ func TestRedisLogs(t *testing.T) {
 			t.Error(err)
 		}
 	}
+	// Sleep for a bit because the adapter queues logs internally and writes them to Redis only when
+	// there are 50 queued up OR a 1 second timeout has been reached.
+	time.Sleep(time.Second * 2)
 	// Read more logs than the buffer can hold
 	messages, err = a.Read(app, 20)
 	if err != nil {
@@ -101,12 +110,17 @@ func TestRedisDestroy(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	a.Start()
+	defer a.Stop()
 	// Write a log to create the file
 	if err := a.Write(app, "Hello, log!"); err != nil {
 		t.Error(err)
 	}
+	// Sleep for a bit because the adapter queues logs internally and writes them to Redis only when
+	// there are 50 queued up OR a 1 second timeout has been reached.
+	time.Sleep(time.Second * 2)
 	// A redis list should exist for the app
-	exists, err := a.redisClient.Exists(app).Result()
+	exists, err := a.(*redisAdapter).redisClient.Exists(app).Result()
 	if err != nil {
 		t.Error(err)
 	}
@@ -118,7 +132,7 @@ func TestRedisDestroy(t *testing.T) {
 		t.Error(err)
 	}
 	// Now check that the redis list no longer exists
-	exists, err = a.redisClient.Exists(app).Result()
+	exists, err = a.(*redisAdapter).redisClient.Exists(app).Result()
 	if err != nil {
 		t.Error(err)
 	}

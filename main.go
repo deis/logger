@@ -18,6 +18,8 @@ func main() {
 	if err != nil {
 		l.Fatal("Error creating storage adapter: ", err)
 	}
+	storageAdapter.Start()
+	defer storageAdapter.Stop()
 
 	aggregator, err := log.NewAggregator(cfg.AggregatorType, storageAdapter)
 	if err != nil {
