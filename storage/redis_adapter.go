@@ -29,11 +29,11 @@ type messagePipeliner struct {
 	errCh         chan error
 }
 
-func newMessagePipeliner(bufferSize int, redisClient *r.Client, errCh chan error) *messagePipeliner {
+func newMessagePipeliner(bufferSize int, redisClient *r.Client, timeout time.Duration, errCh chan error) *messagePipeliner {
 	return &messagePipeliner{
 		bufferSize:    bufferSize,
 		pipeline:      redisClient.Pipeline(),
-		timeoutTicker: time.NewTicker(time.Second),
+		timeoutTicker: time.NewTicker(timeout),
 		queuedApps:    map[string]bool{},
 		errCh:         errCh,
 	}
@@ -68,6 +68,7 @@ type redisAdapter struct {
 	redisClient    *r.Client
 	messageChannel chan *message
 	stopCh         chan struct{}
+	config         *redisConfig
 }
 
 // NewRedisStorageAdapter returns a pointer to a new instance of a redis-based storage.Adapter.
@@ -85,12 +86,13 @@ func NewRedisStorageAdapter(bufferSize int) (Adapter, error) {
 	rsa := &redisAdapter{
 		bufferSize: bufferSize,
 		redisClient: r.NewClient(&r.Options{
-			Addr:     fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
-			Password: cfg.RedisPassword, // "" == no password
-			DB:       int64(cfg.RedisDB),
+			Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+			Password: cfg.Password, // "" == no password
+			DB:       int64(cfg.DB),
 		}),
 		messageChannel: make(chan *message),
 		stopCh:         make(chan struct{}),
+		config:         cfg,
 	}
 	return rsa, nil
 }
@@ -101,7 +103,7 @@ func (a *redisAdapter) Start() {
 	if !a.started {
 		a.started = true
 		errCh := make(chan error)
-		mp := newMessagePipeliner(a.bufferSize, a.redisClient, errCh)
+		mp := newMessagePipeliner(a.bufferSize, a.redisClient, a.config.PipelineTimeout, errCh)
 		go func() {
 			for {
 				select {
@@ -117,13 +119,13 @@ func (a *redisAdapter) Start() {
 				select {
 				case message := <-a.messageChannel:
 					mp.addMessage(message)
-					if mp.messageCount == 50 {
+					if mp.messageCount == a.config.PipelineLength {
 						mp.execPipeline()
-						mp = newMessagePipeliner(a.bufferSize, a.redisClient, errCh)
+						mp = newMessagePipeliner(a.bufferSize, a.redisClient, a.config.PipelineTimeout, errCh)
 					}
 				case <-mp.timeoutTicker.C:
 					mp.execPipeline()
-					mp = newMessagePipeliner(a.bufferSize, a.redisClient, errCh)
+					mp = newMessagePipeliner(a.bufferSize, a.redisClient, a.config.PipelineTimeout, errCh)
 				case <-a.stopCh:
 					return
 				}
