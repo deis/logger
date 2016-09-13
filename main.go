@@ -2,6 +2,9 @@ package main
 
 import (
 	l "log"
+	"net/http"
+
+	_ "net/http/pprof"
 
 	"github.com/deis/logger/log"
 	"github.com/deis/logger/storage"
@@ -29,16 +32,19 @@ func main() {
 	if err != nil {
 		l.Fatal("Error starting log aggregator: ", err)
 	}
+	defer aggregator.Stop()
 	l.Println("Log aggregator running")
 
-	weblogServer, err := weblog.NewServer(storageAdapter)
-	if err != nil {
-		l.Fatal("Error creating weblog server: ", err)
-	}
-	serverErrCh := weblogServer.Listen()
-	l.Println("Weblog server running")
+	weblogServer := weblog.NewServer(storageAdapter)
+	weblogServer.Start()
+	defer weblogServer.Close()
+	l.Printf("Weblog server serving at %s\n", weblogServer.URL)
 
-	defer aggregator.Stop()
+	// start a Go Profiler
+	go func() {
+		l.Println(http.ListenAndServe("0.0.0.0:8099", nil))
+	}()
+
 	stoppedCh := aggregator.Stopped()
 	select {
 	case stopErr := <-stoppedCh:
@@ -47,7 +53,5 @@ func main() {
 		} else {
 			l.Fatal("Log aggregator has stopped with no error")
 		}
-	case serverErr := <-serverErrCh:
-		l.Fatal("Weblog server failed: ", serverErr)
 	}
 }

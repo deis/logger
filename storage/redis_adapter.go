@@ -54,12 +54,9 @@ func (mp messagePipeliner) execPipeline() {
 			mp.errCh <- fmt.Errorf("Error adding ltrim of %s to the pipeline: %s", app, err)
 		}
 	}
-	go func() {
-		defer mp.pipeline.Close()
-		if _, err := mp.pipeline.Exec(); err != nil {
-			mp.errCh <- fmt.Errorf("Error executing pipeline: %s", err)
-		}
-	}()
+	if _, err := mp.pipeline.Exec(); err != nil {
+		mp.errCh <- fmt.Errorf("Error executing pipeline: %s", err)
+	}
 }
 
 type redisAdapter struct {
@@ -105,29 +102,20 @@ func (a *redisAdapter) Start() {
 		errCh := make(chan error)
 		mp := newMessagePipeliner(a.bufferSize, a.redisClient, a.config.PipelineTimeout, errCh)
 		go func() {
+			defer mp.pipeline.Close()
 			for {
 				select {
 				case err := <-errCh:
 					log.Println(err)
 				case <-a.stopCh:
 					return
-				}
-			}
-		}()
-		go func() {
-			for {
-				select {
 				case message := <-a.messageChannel:
 					mp.addMessage(message)
 					if mp.messageCount == a.config.PipelineLength {
-						mp.execPipeline()
-						mp = newMessagePipeliner(a.bufferSize, a.redisClient, a.config.PipelineTimeout, errCh)
+						go mp.execPipeline()
 					}
 				case <-mp.timeoutTicker.C:
-					mp.execPipeline()
-					mp = newMessagePipeliner(a.bufferSize, a.redisClient, a.config.PipelineTimeout, errCh)
-				case <-a.stopCh:
-					return
+					go mp.execPipeline()
 				}
 			}
 		}()
