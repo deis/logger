@@ -12,8 +12,7 @@ a lightweight, [Heroku-inspired](http://heroku.com) workflow.
 
 A system logger for use in the [Deis](http://deis.io) open source PaaS.
 
-This Docker image is based on the official
-[alpine:3.2](https://registry.hub.docker.com/_/alpine/) image.
+This Docker image is based on [quay.io/deis/base](https://github.com/deis/docker-base) image. You can see what version we are currently using in the [Dockerfile](rootfs/Dockerfile)
 
 ## Description
 The new v2 logger implementation has seen a simplification from the last rewrite. While it still uses much of that code it no longer depends on `etcd`. Instead, we will use kubernetes service discovery to determine where logger is running.
@@ -23,18 +22,23 @@ We have also decided to not use `logspout` as the mechanism to get logs from eac
 ## Configuration
 The following environment variables can be used to configure logger:
 
-* `DEIS_NSQD_SERVICE_HOST` - default:""
-* `DEIS_NSQD_SERVICE_PORT_TRANSPORT` - default:4150
-* `NSQ_TOPIC` - default:logs
-* `NSQ_CHANNEL` - default:consume
-* `NSQ_HANDLER_COUNT` - default:30
-* `AGGREGATOR_STOP_TIMEOUT_SEC` - default:1
-* `DEIS_LOGGER_REDIS_SERVICE_HOST` - default:""
-* `DEIS_LOGGER_REDIS_SERVICE_PORT` - default:6379
-* `DEIS_LOGGER_REDIS_PASSWORD` - default:""
-* `DEIS_LOGGER_REDIS_DB` - default:0
-* `DEIS_LOGGER_REDIS_PIPELINE_LENGTH` - default:50
-* `DEIS_LOGGER_REDIS_PIPELINE_TIMEOUT_SECONDS` - default:1
+| Name | Default Value |
+|------|---------------|
+| STORAGE_ADAPTER | "redis" |
+| NUMBER_OF_LINES (per app) | "1000" |
+| AGGREGATOR_TYPE | "nsq" |
+| DEIS_NSQD_SERVICE_HOST | "" |
+| DEIS_NSQD_SERVICE_PORT_TRANSPORT | 4150 |
+| NSQ_TOPIC | logs |
+| NSQ_CHANNEL | consume |
+| NSQ_HANDLER_COUNT | 30 |
+| AGGREGATOR_STOP_TIMEOUT_SEC | 1 |
+| DEIS_LOGGER_REDIS_SERVICE_HOST | "" |
+| DEIS_LOGGER_REDIS_SERVICE_PORT | 6379 |
+| DEIS_LOGGER_REDIS_PASSWORD | "" |
+| DEIS_LOGGER_REDIS_DB | 0 |
+| DEIS_LOGGER_REDIS_PIPELINE_LENGTH | 50 |
+| DEIS_LOGGER_REDIS_PIPELINE_TIMEOUT_SECONDS | 1 |
 
 ## Development
 The only assumption this project makes about your environment is that you have a working docker host to build the image against.
