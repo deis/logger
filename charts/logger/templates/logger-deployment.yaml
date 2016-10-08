@@ -1,0 +1,77 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deis-logger
+  labels:
+    heritage: deis
+  annotations:
+    component.deis.io/version: {{ .Values.docker_tag }}
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: deis-logger
+  template:
+    metadata:
+      labels:
+        app: deis-logger
+    spec:
+      containers:
+      - name: deis-logger
+        image: quay.io/{{.Values.org}}/logger:{{.Values.docker_tag}}
+        imagePullPolicy: {{.Values.pull_policy}}
+        env:
+        - name: STORAGE_ADAPTER
+          value: redis
+{{- if eq .Values.global.logger_redis_location "off-cluster" }}
+        - name: DEIS_LOGGER_REDIS_DB
+          valueFrom:
+            secretKeyRef:
+              name: logger-redis-creds
+              key: db
+        - name: DEIS_LOGGER_REDIS_SERVICE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: logger-redis-creds
+              key: host
+        - name: DEIS_LOGGER_REDIS_SERVICE_PORT
+          valueFrom:
+            secretKeyRef:
+              name: logger-redis-creds
+              key: port
+{{- end }}
+        - name: DEIS_LOGGER_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logger-redis-creds
+              key: password
+        ports:
+        - containerPort: 8088
+          name: http
+{{- if or (.Values.limits_cpu) (.Values.limits_memory)}}
+        resources:
+          limits:
+{{- if (.Values.limits_cpu) }}
+            cpu: {{.Values.limits_cpu}}
+{{- end}}
+{{- if (.Values.limits_memory) }}
+            memory: {{.Values.limits_memory}}
+{{- end}}
+{{- end}}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8088
+          initialDelaySeconds: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8088
+          initialDelaySeconds: 1
+          timeoutSeconds: 1

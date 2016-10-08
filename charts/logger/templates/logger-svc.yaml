@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: deis-logger
+  labels:
+    heritage: deis
+    app: deis-logger
+spec:
+  ports:
+  - port: 80
+    name: http
+    targetPort: http
+  selector:
+    app: deis-logger

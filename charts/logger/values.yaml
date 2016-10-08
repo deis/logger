@@ -1,0 +1,13 @@
+org: "deisci"
+pull_policy: "Always"
+docker_tag: canary
+# limits_cpu: "100m"
+# limits_memory: "50Mi"
+
+global:
+  # Set the location of Workflow's logger-specific Redis instance
+  #
+  # Valid values are:
+  # - on-cluster: Run Redis within the Kubernetes cluster
+  # - off-cluster: Run Redis outside the Kubernetes cluster (configure in loggerRedis section)
+  logger_redis_location: "on-cluster"
