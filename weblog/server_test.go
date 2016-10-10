@@ -33,6 +33,7 @@ func newTestStorageAdapter(t *testing.T) storage.Adapter {
 }
 
 func TestServerStart(t *testing.T) {
+	t.Skip("skipping because of https://github.com/deis/logger/issues/120")
 	storageAdapter := newTestStorageAdapter(t)
 	storageAdapter.Start()
 	defer storageAdapter.Stop()
@@ -63,6 +64,7 @@ func TestServerStart(t *testing.T) {
 }
 
 func TestServerClose(t *testing.T) {
+	t.Skip("skipping because of https://github.com/deis/logger/issues/120")
 	storageAdapter := newTestStorageAdapter(t)
 	storageAdapter.Start()
 	defer storageAdapter.Stop()
@@ -83,6 +85,7 @@ func TestServerClose(t *testing.T) {
 }
 
 func TestServerURL(t *testing.T) {
+	t.Skip("skipping because of https://github.com/deis/logger/issues/120")
 	storageAdapter := newTestStorageAdapter(t)
 	storageAdapter.Start()
 	defer storageAdapter.Stop()
@@ -105,7 +108,7 @@ func TestServerURL(t *testing.T) {
 
 	s.Start()
 
-	if s.URL != "http://" + testBindAddr {
+	if s.URL != "http://"+testBindAddr {
 		t.Errorf("URL is not 'http://%s', got '%s'", testBindAddr, s.URL)
 	}
 
