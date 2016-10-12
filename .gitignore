@@ -2,4 +2,3 @@
 /manifests/*.tmp.yaml
 vendor/
 coverage.txt
-logger

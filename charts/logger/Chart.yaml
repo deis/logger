@@ -1,0 +1,7 @@
+name: logger
+home: https://github.com/deis/logger
+version: <Will be populated by the ci before publishing the chart>
+description: In-memory log buffer used by Deis Workflow.
+maintainers:
+  - name: Deis Team
+    email: engineering@deis.com
