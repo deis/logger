@@ -1,5 +1,7 @@
 package log
 
+import "time"
+
 // Example log message JSON:
 //
 // {"log"=>"2016/05/31 01:34:43 10.164.1.1 GET / - 5074209722772702441\n", "stream"=>"stderr",
@@ -15,6 +17,7 @@ type Message struct {
 	Stream     string     `json:"stream"`
 	Kubernetes Kubernetes `json:"kubernetes"`
 	Docker     Docker     `json:"docker"`
+	Time       time.Time  `json:"time"`
 }
 
 // Kubernetes specific log message fields

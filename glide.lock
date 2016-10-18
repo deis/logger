@@ -1,5 +1,5 @@
-hash: 03d367b59b94b85b1eeb7acec7a679364921474ccc607e8d36a6558d94af5369
-updated: 2016-06-24T22:33:20.466933554Z
+hash: f3b2325d3480fc63a4d4e32f74387dbf6e59607ae0c03d3685f98502f4817f11
+updated: 2016-10-26T14:47:28.134518584-04:00
 imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
@@ -13,6 +13,10 @@ imports:
   - snappy-go
 - name: github.com/nsqio/go-nsq
   version: d71fb89c9e0263aaed89645b0b168e11ccf597b1
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
 - name: gopkg.in/bsm/ratelimit.v1
   version: db14e161995a5177acef654cb0dd785e8ee8bc22
 - name: gopkg.in/redis.v3
@@ -22,4 +26,12 @@ imports:
   - internal/consistenthash
   - internal/hashtag
   - internal/pool
-devImports: []
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib

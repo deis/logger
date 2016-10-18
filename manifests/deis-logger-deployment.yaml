@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ name: deis-logger
+ namespace: deis
+ labels:
+   heritage: deis
+ annotations:
+   helm-keep: "true"
+   component.deis.io/version: canary
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: deis-logger
+  template:
+    metadata:
+      labels:
+        app: deis-logger
+    spec:
+      containers:
+      - name: deis-logger
+        image: quay.io/deis/logger:canary
+        imagePullPolicy: Always
+        env:
+        - name: STORAGE_ADAPTER
+          value: redis
+        - name: DEIS_LOGGER_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logger-redis-creds
+              key: password
+        ports:
+        - containerPort: 8088
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8088
+          initialDelaySeconds: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8088
+          initialDelaySeconds: 1
+          timeoutSeconds: 1
