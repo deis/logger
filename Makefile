@@ -74,7 +74,7 @@ clean: check-docker
 	docker rmi $(IMAGE)
 
 update-manifests:
-	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-rc.yaml > manifests/deis-logger-rc.tmp.yaml
+	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-deployment.yaml > manifests/deis-logger-deployment.tmp.yaml
 
 test: test-style test-unit
 
@@ -122,19 +122,19 @@ test-unit: start-test-redis
 
 kube-install:
 	kubectl create -f manifests/deis-logger-svc.yaml
-	kubectl create -f manifests/deis-logger-rc.yaml
+	kubectl create -f manifests/deis-logger-deployment.yaml
 
 kube-delete:
 	-kubectl delete -f manifests/deis-logger-svc.yaml
-	-kubectl delete -f manifests/deis-logger-rc.tmp.yaml
+	-kubectl delete -f manifests/deis-logger-deployment.tmp.yaml
 
 kube-create: update-manifests
 	kubectl create -f manifests/deis-logger-svc.yaml
-	kubectl create -f manifests/deis-logger-rc.tmp.yaml
+	kubectl create -f manifests/deis-logger-deployment.tmp.yaml
 
 kube-replace: build push update-manifests
-	kubectl replace --force -f manifests/deis-logger-rc.tmp.yaml
+	kubectl replace --force -f manifests/deis-logger-deployment.tmp.yaml
 
 kube-update: update-manifests
-	kubectl delete -f manifests/deis-logger-rc.tmp.yaml
-	kubectl create -f manifests/deis-logger-rc.tmp.yaml
+	kubectl delete -f manifests/deis-logger-deployment.tmp.yaml
+	kubectl create -f manifests/deis-logger-deployment.tmp.yaml

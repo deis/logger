@@ -4,17 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/deis/logger/storage"
 )
 
 const (
+	podPattern              = `(\w.*)-(\w.*)-(\w.*)-(\w.*)`
 	controllerPattern       = `^(INFO|WARN|DEBUG|ERROR)\s+(\[(\S+)\])+:(.*)`
 	controllerContainerName = "deis-controller"
+	timeFormat              = "2006-01-02T15:04:05-07:00"
 )
 
 var (
-	regex = regexp.MustCompile(controllerPattern)
+	controllerRegex = regexp.MustCompile(controllerPattern)
+	podRegex        = regexp.MustCompile(podPattern)
 )
 
 func handle(rawMessage []byte, storageAdapter storage.Adapter) error {
@@ -23,7 +27,7 @@ func handle(rawMessage []byte, storageAdapter storage.Adapter) error {
 		return err
 	}
 	if fromController(message) {
-		storageAdapter.Write(getApplicationFromControllerMessage(message), message.Log)
+		storageAdapter.Write(getApplicationFromControllerMessage(message), buildControllerLogMessage(message))
 	} else {
 		labels := message.Kubernetes.Labels
 		storageAdapter.Write(labels["app"], buildApplicationLogMessage(message))
@@ -37,11 +41,23 @@ func fromController(message *Message) bool {
 }
 
 func getApplicationFromControllerMessage(message *Message) string {
-	return regex.FindStringSubmatch(message.Log)[3]
+	return controllerRegex.FindStringSubmatch(message.Log)[3]
+}
+
+func buildControllerLogMessage(message *Message) string {
+	l := controllerRegex.FindStringSubmatch(message.Log)
+	return fmt.Sprintf("%s deis[controller]: %s %s",
+		message.Time.Format(timeFormat),
+		l[1],
+		strings.Trim(l[4], " "))
 }
 
 func buildApplicationLogMessage(message *Message) string {
-	body := message.Log
-	podName := message.Kubernetes.PodName
-	return fmt.Sprintf("%s -- %s", podName, body)
+	return fmt.Sprintf("%s %s[%s.%s.%s]: %s",
+		message.Time.Format(timeFormat),
+		message.Kubernetes.Labels["app"],
+		message.Kubernetes.Labels["type"],
+		message.Kubernetes.Labels["version"],
+		podRegex.FindStringSubmatch(message.Kubernetes.PodName)[4],
+		message.Log)
 }
