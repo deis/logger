@@ -31,6 +31,7 @@ IMAGE_PREFIX ?= deis
 include versioning.mk
 
 REDIS_CONTAINER_NAME := test-redis-${VERSION}
+NSQ_CONTAINER_NAME := test-nsq-${VERSION}
 
 SHELL_SCRIPTS = $(wildcard _scripts/*.sh)
 
@@ -78,15 +79,19 @@ update-manifests:
 
 test: test-style test-unit
 
-test-cover: start-test-redis
+test-cover: start-test-redis start-test-nsq
 	docker run ${DEV_ENV_OPTS} \
 		-it \
 		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
-		${DEV_ENV_IMAGE} bash -c 'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
-		DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
-		test-cover.sh' \
-		|| (make stop-test-redis && false)
+		--link ${NSQ_CONTAINER_NAME}:TEST_NSQ \
+		${DEV_ENV_IMAGE} bash -c \
+		'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
+		 DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
+		 DEIS_NSQD_SERVICE_HOST=$$TEST_NSQ_PORT_4150_TCP_ADDR \
+		 DEIS_NSQD_SERVICE_PORT_TRANSPORT=$$TEST_NSQ_PORT_4150_TCP_PORT \
+		 test-cover.sh'
 	make stop-test-redis
+	make stop-test-nsq
 
 test-style: check-docker
 	${DEV_ENV_CMD} make style-check
@@ -104,21 +109,32 @@ style-check:
 	shellcheck $(SHELL_SCRIPTS)
 
 start-test-redis:
-	docker run --name ${REDIS_CONTAINER_NAME} -d redis:latest
+	docker run --name ${REDIS_CONTAINER_NAME} -d redis:latest || true
+
+start-test-nsq:
+	docker run --name ${NSQ_CONTAINER_NAME} -d nsqio/nsq nsqd || true
 
 stop-test-redis:
 	docker kill ${REDIS_CONTAINER_NAME}
 	docker rm ${REDIS_CONTAINER_NAME}
 
-test-unit: start-test-redis
+stop-test-nsq:
+	docker kill ${NSQ_CONTAINER_NAME}
+	docker rm ${NSQ_CONTAINER_NAME}
+
+test-unit: start-test-redis start-test-nsq
 	docker run ${DEV_ENV_OPTS} \
 		-it \
 		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
-		${DEV_ENV_IMAGE} bash -c 'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
-		DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
-		$(GOTEST) -tags="testredis" $$(glide nv)' \
-		|| (make stop-test-redis && false)
+		--link ${NSQ_CONTAINER_NAME}:TEST_NSQ \
+		${DEV_ENV_IMAGE} bash -c \
+		'DEIS_LOGGER_REDIS_SERVICE_HOST=$$TEST_REDIS_PORT_6379_TCP_ADDR \
+		 DEIS_LOGGER_REDIS_SERVICE_PORT=$$TEST_REDIS_PORT_6379_TCP_PORT \
+		 DEIS_NSQD_SERVICE_HOST=$$TEST_NSQ_PORT_4150_TCP_ADDR \
+		 DEIS_NSQD_SERVICE_PORT_TRANSPORT=$$TEST_NSQ_PORT_4150_TCP_PORT \
+		 $(GOTEST) -tags="testredis" $$(glide nv)'
 	make stop-test-redis
+	make stop-test-nsq
 
 kube-install:
 	kubectl create -f manifests/deis-logger-svc.yaml
