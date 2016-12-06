@@ -56,9 +56,6 @@ build-binary:
 build: docker-build
 build-without-container: build-binary build-image
 push: docker-push
-upgrade: kube-update
-install: kube-install
-uninstall: kube-delete
 
 # Containerized build of the binary
 build-with-container: check-docker
@@ -73,9 +70,6 @@ build-image:
 
 clean: check-docker
 	docker rmi $(IMAGE)
-
-update-manifests:
-	sed 's#\(image:\) .*#\1 $(IMAGE)#' manifests/deis-logger-deployment.yaml > manifests/deis-logger-deployment.tmp.yaml
 
 test: test-style test-unit
 
@@ -135,22 +129,3 @@ test-unit: start-test-redis start-test-nsq
 		 $(GOTEST) -tags="testredis" $$(glide nv)'
 	make stop-test-redis
 	make stop-test-nsq
-
-kube-install:
-	kubectl create -f manifests/deis-logger-svc.yaml
-	kubectl create -f manifests/deis-logger-deployment.yaml
-
-kube-delete:
-	-kubectl delete -f manifests/deis-logger-svc.yaml
-	-kubectl delete -f manifests/deis-logger-deployment.tmp.yaml
-
-kube-create: update-manifests
-	kubectl create -f manifests/deis-logger-svc.yaml
-	kubectl create -f manifests/deis-logger-deployment.tmp.yaml
-
-kube-replace: build push update-manifests
-	kubectl replace --force -f manifests/deis-logger-deployment.tmp.yaml
-
-kube-update: update-manifests
-	kubectl delete -f manifests/deis-logger-deployment.tmp.yaml
-	kubectl create -f manifests/deis-logger-deployment.tmp.yaml
