@@ -65,7 +65,7 @@ build-with-container: check-docker
 docker-build: build-with-container build-image
 
 build-image:
-	docker build -t ${IMAGE} rootfs
+	docker build ${DOCKER_BUILD_FLAGS} -t ${IMAGE} rootfs
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
 clean: check-docker

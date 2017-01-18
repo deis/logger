@@ -20,4 +20,3 @@ docker-immutable-push:
 .PHONY: docker-mutable-push
 docker-mutable-push:
 	docker push ${MUTABLE_IMAGE}
-	
