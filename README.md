@@ -4,17 +4,19 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/deis/logger)](https://goreportcard.com/report/github.com/deis/logger)
 [![Docker Repository on Quay](https://quay.io/repository/deis/logger/status "Docker Repository on Quay")](https://quay.io/repository/deis/logger)
 
-Deis (pronounced DAY-iss) is an open source PaaS that makes it easy to deploy and manage
-applications on your own servers. Deis builds on [Kubernetes](http://kubernetes.io/) to provide
-a lightweight, [Heroku-inspired](http://heroku.com) workflow.
+Deis (pronounced DAY-iss) Workflow is an open source Platform as a Service (PaaS) that adds a developer-friendly layer to any [Kubernetes](http://kubernetes.io) cluster, making it easy to deploy and manage applications on your own servers.
 
 ![Deis Graphic](https://s3-us-west-2.amazonaws.com/get-deis/deis-graphic-small.png)
 
-A system logger for use in the [Deis](http://deis.io) open source PaaS.
+For more information about the Deis Workflow, please visit the main project page at https://github.com/deis/workflow.
+
+We welcome your input! If you have feedback, please [submit an issue][issues]. If you'd like to participate in development, please read the "Development" section below and [submit a pull request][prs].
+
+## Description
+A system logger for use in the [Deis Workflow](https://deis.com/workflow/) open source PaaS.
 
 This Docker image is based on [quay.io/deis/base](https://github.com/deis/docker-base) image. You can see what version we are currently using in the [Dockerfile](rootfs/Dockerfile)
 
-## Description
 The new v2 logger implementation has seen a simplification from the last rewrite. While it still uses much of that code it no longer depends on `etcd`. Instead, we will use kubernetes service discovery to determine where logger is running.
 
 We have also decided to not use `logspout` as the mechanism to get logs from each container to the `logger` component. Now we will use [fluentd](http://fluentd.org) which is a widely supported logging framework with hundreds of plugins. This will allow the end user to configure multiple destinations such as Elastic Search and other Syslog compatible endpoints like [papertrail](http://papertrailapp.com).
@@ -110,3 +112,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+[issues]: https://github.com/deis/logger/issues
+[prs]: https://github.com/deis/logger/pulls
