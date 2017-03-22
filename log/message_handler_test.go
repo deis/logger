@@ -18,6 +18,9 @@ var (
 	validAppMessage = `{"log": "test message", "stream": "stderr", "time": "2016-10-18T20:29:38+00:00", "docker": {"container_id": "containerId"}, "kubernetes": {"namespace_name": "foo", "pod_id": "podId", "pod_name": "foo-web-845861952-nzf60", "container_name": "foo-web", "labels": {"app": "foo",
 "heritage": "deis", "type": "web", "version": "v2"}, "host": "host"}}`
 
+	badPodNameMessage = `{"log": "test message", "stream": "stderr", "time": "2016-10-18T20:29:38+00:00", "docker": {"container_id": "containerId"}, "kubernetes": {"namespace_name": "foo", "pod_id": "podId", "pod_name": "foo-web-845861952", "container_name": "foo-web", "labels": {"app": "foo",
+"heritage": "deis", "type": "web", "version": "v2"}, "host": "host"}}`
+
 	badjson = `{"log":}`
 )
 
@@ -60,6 +63,16 @@ func TestBuildApplicationLogMessageFromValidMessage(t *testing.T) {
 	expected := buildApplicationLogMessage(message)
 	assert.Equal(t, expected,
 		"2016-10-18T20:29:38+00:00 foo[web.v2.nzf60]: test message",
+		"failed to build application log")
+}
+
+func TestBuildApplicationLogMessageFromInvalidMessage(t *testing.T) {
+	message := new(Message)
+	err := json.Unmarshal([]byte(badPodNameMessage), message)
+	assert.NoError(t, err, "error occured parsing log message")
+	expected := buildApplicationLogMessage(message)
+	assert.Equal(t, expected,
+		"2016-10-18T20:29:38+00:00 foo[web.v2]: test message",
 		"failed to build application log")
 }
 
