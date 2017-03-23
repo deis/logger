@@ -53,11 +53,17 @@ func buildControllerLogMessage(message *Message) string {
 }
 
 func buildApplicationLogMessage(message *Message) string {
-	return fmt.Sprintf("%s %s[%s.%s.%s]: %s",
+	p := podRegex.FindStringSubmatch(message.Kubernetes.PodName)
+	tag := fmt.Sprintf(
+		"%s.%s",
+		message.Kubernetes.Labels["type"],
+		message.Kubernetes.Labels["version"])
+	if len(p) > 0 {
+		tag = fmt.Sprintf("%s.%s", tag, p[len(p)-1])
+	}
+	return fmt.Sprintf("%s %s[%s]: %s",
 		message.Time.Format(timeFormat),
 		message.Kubernetes.Labels["app"],
-		message.Kubernetes.Labels["type"],
-		message.Kubernetes.Labels["version"],
-		podRegex.FindStringSubmatch(message.Kubernetes.PodName)[4],
+		tag,
 		message.Log)
 }
