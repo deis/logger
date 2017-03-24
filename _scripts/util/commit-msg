@@ -14,7 +14,7 @@ capital_regex="^.+\): [a-z][\w\s\d]*"
 MESSAGE[1]="file"
 
 i=1 # the first array variable is at index 1
-while read line
+while read -r line
 do
 	MESSAGE[$i]=$line
 	let i++
