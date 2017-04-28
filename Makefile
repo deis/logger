@@ -33,7 +33,7 @@ include versioning.mk
 REDIS_CONTAINER_NAME := test-redis-${VERSION}
 NSQ_CONTAINER_NAME := test-nsq-${VERSION}
 
-SHELL_SCRIPTS = $(wildcard _scripts/*.sh)
+SHELL_SCRIPTS = $(wildcard _scripts/util/*)
 
 check-docker:
 	@if [ -z $$(which docker) ]; then \
@@ -118,7 +118,6 @@ stop-test-nsq:
 
 test-unit: start-test-redis start-test-nsq
 	docker run ${DEV_ENV_OPTS} \
-		-it \
 		--link ${REDIS_CONTAINER_NAME}:TEST_REDIS \
 		--link ${NSQ_CONTAINER_NAME}:TEST_NSQ \
 		${DEV_ENV_IMAGE} bash -c \
